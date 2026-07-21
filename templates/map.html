@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>マップ</title>
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+    <style>
+    #map {
+        height: 100vh;
+        width: 100%;
+    }
+
+    #legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+
+    background: rgba(255,255,255,0.95);
+    padding: 12px;
+    border-radius: 10px;
+
+    font-size: 13px;
+    line-height: 1.8;
+
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+/* ⭐ 核心：双层圆 */
+.icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+    margin-right: 8px;
+
+    color: white;          /* 图标颜色 */
+}
+.circle-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    position: relative;
+    background: white;
+    border: 4px solid red;
+}
+
+/* 斜杠（禁钓） */
+.circle-icon.no-fishing::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    background: red;
+    top: 50%;
+    left: 0;
+    transform: rotate(-45deg);
+}
+
+/* 危险 */
+.warning-icon {
+    font-size: 20px;
+    margin-right: 8px;
+}
+/* 对应地图颜色 */
+.icon.ayu    { background: #FFD700; }  /* 🐟 */
+.icon.amago  { background: #FF5722; }  /* 🐠 */
+.icon.fish   { background: #FF9800; }  /* 🎣 */
+.icon.toilet { background: #4CAF50; }  /* 🚻 */
+.icon.parking{ background: #2196F3; }  /* 🅿 */
+    </style>
+</head>
+
+<body>
+
+<div id="map">
+
+</div>
+<div id="legend">
+    <b>📍 マップ説明</b><br>
+
+    <div class="legend-item">
+        <span class="box ayu-box">
+            <span class="icon ayu">🐟</span>
+        </span>
+        鮎おすすめのエリア
+    </div>
+
+    <div class="legend-item">
+        <span class="box amago-box">
+            <span class="icon amago">🐠</span>
+        </span>
+        アマゴおすすめのエリア
+    </div>
+
+    <div class="legend-item">
+        <span class="icon fish">🎣</span>
+        おすすめの釣りポイント
+    </div>
+
+    <div class="legend-item">
+        <span class="icon toilet">🚻</span>
+        トイレ
+    </div>
+
+    <div class="legend-item">
+        <span class="icon parking">🅿</span>
+        駐車場
+    </div>
+    <div class="legend-item">
+    <span class="danger-box">
+        <span class="circle-icon no-fishing"></span>
+    </span>
+    立入禁止エリア
+</div>
+
+<div class="legend-item">
+    <span class="danger-pattern-box">
+        ⚠️
+    </span>
+    危険エリア
+</div>
+</div>
+
+
+<style>
+/* 地图区域 */
+#map {
+    width: 100%;
+    height: 100vh;
+}
+
+/* 整个图例面板 */
+
+
+/* 每一行间距 */
+.legend-item {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+/* 🔥彩色方框（放大） */
+.box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;      /* 放大 */
+    height: 36px;     /* 放大 */
+    border-radius: 6px;
+    margin-right: 10px;
+}
+
+
+/* 鮎 = 黄色 */
+.ayu-box {
+    background: #FFD54F;
+    border: 2px solid #FBC02D;
+}
+
+/* アマゴ = 绿色 */
+.amago-box {
+    background: #81C784;
+    border: 2px solid #388E3C;
+}
+.danger-box {
+    width: 30px;
+    height: 30px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-right: 10px;
+
+    background: #ff0000;      /* ⭐ 大红色 */
+    border: 2px solid #b30000;
+
+    border-radius: 0px;      /* ⭐ 方形（重点） */
+
+    color: white;            /* 🚫变白更清晰 */
+    font-size: 16px;
+    line-height: 1;
+}
+
+
+.danger-pattern-box {
+    width: 30px;
+    height: 30px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-right: 10px;
+
+    position: relative;
+
+    border: 2px solid #cc0000;
+    border-radius: 6px;
+
+    background:
+        repeating-linear-gradient(
+            45deg,
+            rgba(204,0,0,0.25),
+            rgba(204,0,0,0.25) 4px,
+            transparent 4px,
+            transparent 8px
+        );
+}
+</style>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://teastman.github.io/Leaflet.pattern/leaflet.pattern.js"></script>
+<script src="https://unpkg.com/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
+<script>
+
+    function createIcon(color, text) {
+    return L.divIcon({
+        html: `
+            <div style="
+                background:${color};
+                color:white;
+                width:32px;
+                height:32px;
+                border-radius:50%;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-weight:bold;
+                border:2px solid white;
+                box-shadow:0 0 5px rgba(0,0,0,0.3);
+            ">
+                ${text}
+            </div>
+        `,
+        className: "",
+        iconSize: [32, 32]
+    });
+}
+   function createCone(lat, lng, angle, spread = 60, distance = 0.0008) {
+    var points = [];
+    points.push([lat, lng]);
+
+    for (var i = -spread/2; i <= spread/2; i += 5) {
+        var rad = (angle + i) * Math.PI / 180;
+        var newLat = lat + distance * Math.cos(rad);
+        var newLng = lng + distance * Math.sin(rad);
+        points.push([newLat, newLng]);
+    }
+
+    points.push([lat, lng]);
+    return points;
+}
+
+// ⭐ 初始化地图
+var map = L.map('map');
+map.setView([35.0, 135.0], 13);
+var dangerPattern = new L.StripePattern({
+    weight: 6,               // ⭐ 更粗
+    spaceWeight: 3,          // ⭐ 更密
+    color: '#cc0000',        // ⭐ 深红（比 red 好看）
+    spaceColor: 'transparent',
+    opacity: 0.9,            // ⭐ 更深
+    angle: 45
+});
+dangerPattern.addTo(map);
+dangerPattern.addTo(map);
+var parkingIcon = createIcon("#2196F3", "P");
+var toiletIcon  = createIcon("#4CAF50", "🚻");
+var fishIcon = L.divIcon({
+    html: `
+        <div style="
+            background:#FF9800;
+            color:white;
+            width:45px;
+            height:45px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:bold;
+            border:2px solid white;
+            box-shadow:0 0 6px rgba(0,0,0,0.4);
+            font-size:20px;
+        ">
+            🎣
+        </div>
+    `,
+    className: "",
+    iconSize: [45, 45]
+});
+var ayuIcon = L.divIcon({
+    html: `
+        <div style="
+            background:#FFD700;
+            color:white;
+            width:48px;
+            height:48px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:bold;
+            border:2px solid white;
+            box-shadow:0 0 6px rgba(0,0,0,0.4);
+            font-size:22px;
+        ">
+            🐟
+        </div>
+    `,
+    className: "",
+    iconSize: [48, 48]
+});
+var amagoIcon = L.divIcon({
+    html: `
+        <div style="
+            background:#FF5722;
+            color:white;
+            width:48px;
+            height:48px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:bold;
+            border:2px solid white;
+            box-shadow:0 0 6px rgba(0,0,0,0.4);
+            font-size:22px;
+        ">
+            🐠
+        </div>
+    `,
+    className: "",
+    iconSize: [48, 48]
+});
+
+// 地图图层（先加载这个）
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
+var arrowIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/32/32195.png',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+});
+
+
+// 🚫 禁钓区（polygon）
+var noFishingZones = [
+        {
+    coords:[
+        [35.14629280956625, 134.7108394888874],
+        [35.14532743993205, 134.7110362566006],
+        [35.144040262607355, 134.71080013534475],
+        [35.14136930471439, 134.71202009516657],
+        [35.14050042000061, 134.7143026006396],
+        [35.13782934595121, 134.7149716108645],
+        [35.13641331934341, 134.7150896714924],
+        [35.13470761822814, 134.7157586817173],
+        [35.13428923325174, 134.7158767423452],
+        [35.13374211119249, 134.71642769194213],
+        [35.13303406542306, 134.716112863601],
+        [35.13232601349653, 134.71772635884923],
+        [35.130601305756834, 134.71592051388822],
+        [35.13080612861332, 134.71436220050148],
+        [35.13139783619363, 134.71369435190718],
+        [35.1321488434691, 134.71355521678336],
+        [35.132649511137956, 134.71277606009],
+        [35.133855652425936, 134.71377783298146],
+        [35.135039018966594, 134.71349956273383],
+        [35.13670025451245, 134.71308215736238],
+        [35.137769799186586, 134.7136108708329],
+        [35.14077875514905, 134.71126201968974],
+        [35.14128203191306, 134.71090027053228],
+        [35.143403498430274, 134.71044428455642],
+        [35.146158591628314, 134.71080830276463]
+    ],
+   note:"長谷ダム🚫 立入禁止区域"
+},
+    {
+        coords: [
+            [35.13429252748166, 134.69627842984949],
+            [35.13392841146491, 134.69588884965341],
+            [35.13376911019555, 134.69605581259458],
+            [35.13370083812756, 134.69605581259458],
+            [35.13310914447362, 134.69641756563382],
+            [35.13288156884642, 134.69591667681027],
+            [35.13249468882043, 134.69577754102593],
+            [35.13188022853037, 134.69600015828087],
+            [35.13142506977049, 134.69555492377106],
+            [35.13085611774289, 134.69619494837892],
+            [35.130332678366536, 134.695972331124],
+            [35.13028716174, 134.69594450396716],
+            [35.127760949079246, 134.69538796082986],
+            [35.12653195242295, 134.69705759024168],
+            [35.12594020667761, 134.69711324455542],
+            [35.12553053402764, 134.69650104710442],
+            [35.12456802766513, 134.6963023191992],
+            [35.124405629969, 134.6966332417217],
+            [35.124324430999515, 134.6967656107307],
+            [35.124107900018466, 134.69732817901894],
+            [35.12408083360535, 134.69825476208192],
+            [35.12416203281767, 134.69908206838815],
+            [35.12445976257035, 134.6992806219016],
+            [35.124649226391774, 134.69957845217186],
+            [35.12445976257035, 134.70020720496458],
+            [35.12448682885754, 134.70010792820784],
+            [35.12416203281767, 134.70024029721682],
+            [35.12391843493782, 134.70047194298257],
+            [35.123837235482654, 134.70080286550507],
+            [35.123620703206406, 134.70113378802756],
+            [35.12351243685244, 134.70166326406354],
+            [35.123106436743356, 134.70262293937876],
+            [35.12272750148238, 134.70391353721647],
+            [35.1228357688797, 134.70397972172097],
+            [35.123106436743356, 134.70450919775695],
+            [35.12305230324257, 134.7044761055047],
+            [35.12326883702983, 134.70434373649573],
+            [35.12359363663141, 134.7044099210002],
+            [35.123810168979595, 134.70431064424346],
+            [35.124134966422574, 134.70437682874797],
+            [35.12521761521171, 134.70354952244173],
+            [35.125677736589324, 134.70288767739677],
+            [35.125758934209664, 134.70374807595525],
+            [35.12654384036613, 134.7033840611805],
+            [35.126462643528306, 134.70328478442374],
+            [35.12670623379889, 134.70358261469397],
+            [35.12665210269061, 134.7050055815407],
+            [35.12713928136992, 134.70497248928845],
+            [35.12787004392461, 134.7054688730722],
+            [35.12906090218627, 134.7042113674867],
+            [35.12903383741915, 134.7033840611805],
+            [35.129087966944375, 134.7035164301895],
+            [35.12879025411044, 134.7032516921715],
+            [35.12841134529321, 134.7028545851445],
+            [35.12841134529321, 134.70073668100056],
+            [35.12879025411044, 134.70166326406354],
+            [35.12933154936258, 134.70179563307255],
+            [35.1298457765195, 134.7012992492888],
+            [35.130414129072975, 134.70265603163102],
+            [35.131388438507216, 134.70262293937876],
+            [35.133039325103155, 134.70268912388326],
+            [35.133120515383666, 134.70153089505456],
+            [35.1333099590567, 134.70047194298257],
+            [35.13225448155098, 134.6998100979376],
+            [35.13249805449744, 134.69898279163138],
+            [35.132037971653574, 134.6983871310909],
+            [35.13293107126986, 134.69815548532517],
+            [35.133770034713365, 134.6984533155954],
+            [35.134148918596246, 134.69802311631614],
+            [35.13374297151141, 134.69762600928917],
+            [35.134148918596246, 134.69732817901894],
+            [35.1339324137362, 134.69689797973967],
+            [35.13431129686349, 134.6966332417217],
+            [35.13433835987654, 134.69636850370372]
+        ],
+        note: "太田ダム🚫 立入禁止区域"
+    },
+
+    ]
+var dangerZones = [
+    {
+        coords: [
+            [35.089023593331596, 134.74180586258606],
+            [35.088535892331606, 134.74362898367457],
+            [35.08988423504078, 134.74424253404092],
+            [35.09085961799841, 134.74192857265933],
+            [35.089023593331596, 134.74173574254422]
+        ],
+
+        notes: "熊目撃情報,秋期（１０～１２月）注意"
+    },
+     {
+        coords: [
+            [35.05663919331958, 134.75403784062033],
+            [35.05602622445426, 134.75468741305917],
+            [35.05595975767426, 134.75436262683974],
+            [35.0563954833579, 134.75249510607802],
+            [35.057355548692534, 134.7528018486186]
+        ],
+        notes: "【まつかせ駐車場】付近は河川敷に鹿が隠れる茂みがあります。"
+    },
+
+
+];
+
+
+
+// =====================
+// 🟢 全局变量
+// =====================
+var userMarker;
+var directionCone;
+var currentHeading = 0;
+
+var polygons = [];        // 禁钓区域
+var dangerPolygons = [];  // 危险区域
+
+var inRestrictedZone = false;
+var inDangerZone = false;
+
+
+// =====================
+// 🟢 方向传感器
+// =====================
+window.addEventListener("deviceorientation", function(event) {
+    currentHeading = event.alpha || 0;
+});
+
+
+// =====================
+// 🟢 初始化禁钓区域
+// =====================
+noFishingZones.forEach(function(zone) {
+
+    var polygon = L.polygon(zone.coords, {
+        color: 'red',
+        fillColor: 'red',
+        fillOpacity: 0.3
+    }).addTo(map);
+
+    polygon.bindPopup(zone.note);
+
+    polygons.push(polygon);
+
+    // ⭐⭐⭐ 在这里加（重点！）
+
+    var center = polygon.getBounds().getCenter();
+
+    L.marker(center, {
+        icon: L.divIcon({
+            className: '',
+            html: `
+                <div style="
+                    width:42px;
+                    height:42px;
+                    border-radius:50%;
+                    background:white;
+                    border:5px solid red;
+                    position:relative;
+                    box-shadow:0 0 6px rgba(0,0,0,0.4);
+                ">
+                    <div style="
+                        position:absolute;
+                        width:100%;
+                        height:5px;
+                        background:red;
+                        top:50%;
+                        left:0;
+                        transform:rotate(-45deg);
+                    "></div>
+                </div>
+            `
+        })
+    }).addTo(map);
+
+});
+
+
+// =====================
+// 🟢 初始化危险区域
+// =====================
+dangerZones.forEach(function(zone) {
+
+    var polygon = L.polygon(zone.coords, {
+        color: 'red',
+        fillPattern: dangerPattern   // ⭐ 核心！
+    }).addTo(map);
+
+    polygon.bindPopup(zone.notes);
+    dangerPolygons.push(polygon);
+
+    // ⚠️ 中间警告标志
+    var center = polygon.getBounds().getCenter();
+
+    L.marker(center, {
+        icon: L.divIcon({
+            className: '',
+            html: '<div style="font-size:26px;">⚠️</div>'
+        })
+    }).addTo(map);
+
+});
+
+
+// =====================
+// 🟢 实时定位（核心🔥）
+// =====================
+navigator.geolocation.watchPosition(
+
+function(position) {
+
+
+    var lat = position.coords.latitude;
+    var lng = position.coords.longitude;
+
+    var userLatLng = [lat, lng];
+
+
+    console.log("GPS:", lat, lng);
+
+
+
+    // =====================
+    // 📍 1. 更新位置
+    // =====================
+
+    if (!userMarker) {
+
+        userMarker = L.marker(userLatLng, {
+            icon: arrowIcon
+        })
+        .addTo(map)
+        .bindPopup("📍 あなたの現在地");
+
+
+        map.setView(userLatLng,16);
+
+
+    } else {
+
+        userMarker.setLatLng(userLatLng);
+
+    }
+
+
+
+    if(userMarker.setRotationAngle){
+
+        userMarker.setRotationAngle(currentHeading);
+
+    }
+
+
+
+    // =====================
+    // 🚫 2. 禁钓区域判断
+    // =====================
+
+    var insideRestricted = false;
+
+
+    polygons.forEach(function(polygon){
+
+        if(polygon.getBounds().contains(userLatLng)){
+
+            insideRestricted=true;
+
+        }
+
+    });
+
+
+
+    if(insideRestricted && !inRestrictedZone){
+
+        alert("🚫 禁釣区域に入りました！");
+        inRestrictedZone=true;
+
+    }
+
+
+    if(!insideRestricted){
+
+        inRestrictedZone=false;
+
+    }
+
+
+
+
+
+    // =====================
+    // ⚠ 3. 危险区域判断
+    // =====================
+
+    var insideDanger=false;
+
+
+    dangerPolygons.forEach(function(polygon){
+
+        if(polygon.getBounds().contains(userLatLng)){
+
+            insideDanger=true;
+
+        }
+
+    });
+
+
+
+    if(insideDanger && !inDangerZone){
+
+        alert("⚠ 危険区域入りました、注意して！");
+        inDangerZone=true;
+
+    }
+
+
+    if(!insideDanger){
+
+        inDangerZone=false;
+
+    }
+
+
+
+
+
+    // =====================
+    // 🔺 4. 扇形更新
+    // =====================
+
+    if(directionCone){
+
+        map.removeLayer(directionCone);
+
+    }
+
+
+    directionCone=L.polygon(
+
+        createCone(
+            lat,
+            lng,
+            currentHeading,
+            45,
+            0.0005
+        ),
+
+        {
+            color:insideRestricted?'red':'blue',
+            fillColor:insideRestricted?'red':'blue',
+            fillOpacity:0.3
+        }
+
+    ).addTo(map);
+
+
+
+},
+
+
+
+function(error){
+
+
+    console.log("GPS error:",error);
+
+
+    alert(
+        "位置取得失敗: "
+        + error.message
+    );
+
+
+},
+
+
+
+{
+
+    enableHighAccuracy:true,
+
+    maximumAge:0,
+
+    timeout:10000
+
+}
+
+);
+
+
+
+
+// 🎣
+
+var fishingpoint = [
+ {
+        type: "point",
+        lat: 35.08544314216761,
+        lng: 134.74740736032405,
+        name:  `
+<div style="font-size:14px; line-height:1.5;">
+<b style="color:#FF9800;">🎣 大河プールポイント</b><br>
+NPO法人兵庫トラウトファウンデーションの管理区域です。<br>
+釣りを行う際は、所定の費用を納めてください。<br><br>
+
+<b>📍支払い場所</b><br>
+兵庫県神崎郡神河町高朝田407番地の1<br><br>
+
+<b>⚠ 注意事項</b><br>
+ルールを守って釣りを楽しみましょう。
+</div>
+`
+    },
+    {
+        type: "point",
+        lat: 35.06686132324968,
+        lng: 134.74479912801306,
+        name: `
+<div style="font-size:14px; line-height:1.5;">
+<b style="color:#FF9800;">🎣 鉄板橋ポイント</b><br>
+NPO法人兵庫トラウトファウンデーションの管理区域です。<br>
+釣りを行う際は、所定の費用を納めてください。<br><br>
+
+<b>📍 支払い場所</b><br>
+兵庫県神崎郡神河町高朝田407番地の1<br><br>
+
+<b>⚠ 注意事項</b><br>
+ルールを守って釣りを楽しみましょう。
+</div>
+`
+    },
+  {
+        type: "point",
+        lat: 35.06422018784911,
+        lng: 134.74442601364612,
+        name: `
+<div style="font-size:14px; line-height:1.5;">
+<b style="color:#FF9800;">🎣 寺前桥ポイント</b><br>
+NPO法人兵庫トラウトファウンデーションの管理区域です。<br>
+釣りを行う際は、所定の費用を納めてください。<br><br>
+
+<b>📍 支払い場所</b><br>
+兵庫県神崎郡神河町高朝田407番地の1<br><br>
+
+<b>⚠ 注意事項</b><br>
+ルールを守って釣りを楽しみましょう。
+</div>
+`
+    },
+    {
+        type: "point",
+        lat: 35.05597089313624,
+        lng: 134.75463064397172,
+         name: `
+<div style="font-size:14px; line-height:1.5;">
+<b style="color:#FF9800;">🎣 松ヶ瀬ポイント</b><br>
+NPO法人兵庫トラウトファウンデーションの管理区域です。<br>
+釣りを行う際は、所定の費用を納めてください。<br><br>
+
+<b>📍 支払い場所</b><br>
+兵庫県神崎郡神河町高朝田407番地の1<br><br>
+
+<b>⚠ 注意事項</b><br>
+ルールを守って釣りを楽しみましょう。
+</div>
+`
+    },
+{
+        type: "point",
+        lat: 35.04824024353881,
+        lng: 134.75946706236968,
+        name: `
+<div style="font-size:14px; line-height:1.5;">
+<b style="color:#FF9800;">🎣 しんこう大橋ポイント</b><br>
+NPO法人兵庫トラウトファウンデーションの管理区域です。<br>
+釣りを行う際は、所定の費用を納めてください。<br><br>
+
+<b>📍 支払い場所</b><br>
+兵庫県神崎郡神河町高朝田407番地の1<br><br>
+
+<b>⚠ 注意事項</b><br>
+ルールを守って釣りを楽しみましょう。
+</div>
+`
+    },
+    {
+        type: "point",
+        lat: 35.03653701724787,
+        lng: 134.76648721242688,
+       name: `
+<div style="font-size:14px; line-height:1.5;">
+<b style="color:#FF9800;">🎣 越知川と合流ポイント</b><br>
+NPO法人兵庫トラウトファウンデーションの管理区域です。<br>
+釣りを行う際は、所定の費用を納めてください。<br><br>
+
+<b>📍 支払い場所</b><br>
+兵庫県神崎郡神河町高朝田407番地の1<br><br>
+
+<b>⚠ 注意事項</b><br>
+ルールを守って釣りを楽しみましょう。
+</div>
+`
+    },
+    {
+        type: "area",
+        fish: "ayu",
+        coords: [
+            [35.1154930329223, 134.83557631830482],
+            [35.116708393051795, 134.83778643377119],
+            [35.11739682390405, 134.83933250919225],
+            [35.11749263407127, 134.83973075451502],
+            [35.11652175249607, 134.83788008507386],
+            [35.1153656218207, 134.83574049251874]
+        ],
+        name:  `
+<b>🐟 越知釣り場</b><br>
+鮎の釣り専用区、アユが良く釣れます。<br>
+（別途、漁券の購入が必要）<br><br>
+
+<b>📅 解禁日</b><br>
+令和8年6月13日（土）夜明け<br><br>
+
+<b>🎫 遊漁券・おとり取扱店</b><br>
+① 竹國保さん宅（遊漁券・おとり）<br>
+📞 0790-33-0728 / 090-3038-9408<br><br>
+
+② 藤森おとり店（遊漁券・おとり）<br>
+📞 0790-32-0702<br><br>
+
+③ 松原菓子店（遊漁券のみ）<br>
+📞 0790-32-1170<br><br>
+
+④ 役場 農林政策課（遊漁券のみ）<br>
+📞 0790-34-0960<br>
+※平日 8:30〜17:15
+`
+    },
+    {
+        type: "area",
+        fish: "ayu",
+        coords: [
+            [35.09701979095105, 134.83730883632924],
+            [35.09300816075492, 134.83551283800819],
+            [35.08858788898836, 134.83192660446858],
+            [35.08846617463181, 134.83239763630203],
+            [35.09296948484889, 134.83594277062733],
+            [35.09698551796266, 134.8376511126456]
+        ],
+        name:  `
+<b>🐟 鮎エリア</b><br>
+鮎の釣り専用区、アユが良く釣れます。<br>
+（別途、漁券の購入が必要）<br><br>
+
+<b>📅 解禁日</b><br>
+令和8年6月13日（土）夜明け<br><br>
+
+<b>🎫 遊漁券・おとり取扱店</b><br>
+① 竹國保さん宅（遊漁券・おとり）<br>
+📞 0790-33-0728 / 090-3038-9408<br><br>
+
+② 藤森おとり店（遊漁券・おとり）<br>
+📞 0790-32-0702<br><br>
+
+③ 松原菓子店（遊漁券のみ）<br>
+📞 0790-32-1170<br><br>
+
+④ 役場 農林政策課（遊漁券のみ）<br>
+📞 0790-34-0960<br>
+※平日 8:30〜17:15
+`
+    },
+    {
+        type: "area",
+        fish: "ayu",
+        coords: [
+            [35.08390189814036, 134.82691807539],
+            [35.08251901342239, 134.823294792158],
+            [35.082370311541425, 134.81571601427748],
+            [35.0820937507802, 134.81568919218836],
+            [35.08229338827017, 134.82332066114913],
+            [35.08368370563042, 134.8270267785396]
+        ],
+        name:  `
+<b>🐟 鮎エリア</b><br>
+鮎の釣り専用区、アユが良く釣れます。<br>
+（別途、漁券の購入が必要）<br><br>
+
+<b>📅 解禁日</b><br>
+令和8年6月13日（土）夜明け<br><br>
+
+<b>🎫 遊漁券・おとり取扱店</b><br>
+① 竹國保さん宅（遊漁券・おとり）<br>
+📞 0790-33-0728 / 090-3038-9408<br><br>
+
+② 藤森おとり店（遊漁券・おとり）<br>
+📞 0790-32-0702<br><br>
+
+③ 松原菓子店（遊漁券のみ）<br>
+📞 0790-32-1170<br><br>
+
+④ 役場 農林政策課（遊漁券のみ）<br>
+📞 0790-34-0960<br>
+※平日 8:30〜17:15
+`
+    },
+     {
+        type: "area",
+        fish: "ayu",
+        coords: [
+            [35.078318917569845, 134.80657232341798],
+            [35.078269249681945, 134.8053357356943],
+            [35.077194849687864, 134.803883000331],
+            [35.07721347540614, 134.80027944492463],
+            [35.07685698400952, 134.80013936547394],
+            [35.078061381221914, 134.8064798395103]
+        ],
+        name:  `
+<b>🐟 鮎エリア</b><br>
+鮎の釣り専用区、アユが良く釣れます。<br>
+（別途、漁券の購入が必要）<br><br>
+
+<b>📅 解禁日</b><br>
+令和8年6月13日（土）夜明け<br><br>
+
+<b>🎫 遊漁券・おとり取扱店</b><br>
+① 竹國保さん宅（遊漁券・おとり）<br>
+📞 0790-33-0728 / 090-3038-9408<br><br>
+
+② 藤森おとり店（遊漁券・おとり）<br>
+📞 0790-32-0702<br><br>
+
+③ 松原菓子店（遊漁券のみ）<br>
+📞 0790-32-1170<br><br>
+
+④ 役場 農林政策課（遊漁券のみ）<br>
+📞 0790-34-0960<br>
+※平日 8:30〜17:15
+`
+    },
+    {
+        type: "area",
+        fish: "ayu",
+        coords: [
+            [35.0732204476192, 134.78158733537984],
+            [35.07295203316718, 134.78085331458882],
+            [35.072849779810355, 134.77835452040668],
+            [35.0724279833592, 134.7771051233156],
+            [35.07242798334806, 134.77707388830137],
+            [35.07290090649363, 134.78179036232018]
+        ],
+        name:  `
+<b>🐟 鮎エリア</b><br>
+鮎の釣り専用区、アユが良く釣れます。<br>
+（別途、漁券の購入が必要）<br><br>
+
+<b>📅 解禁日</b><br>
+令和8年6月13日（土）夜明け<br><br>
+
+<b>🎫 遊漁券・おとり取扱店</b><br>
+① 竹國保さん宅（遊漁券・おとり）<br>
+📞 0790-33-0728 / 090-3038-9408<br><br>
+
+② 藤森おとり店（遊漁券・おとり）<br>
+📞 0790-32-0702<br><br>
+
+③ 松原菓子店（遊漁券のみ）<br>
+📞 0790-32-1170<br><br>
+
+④ 役場 農林政策課（遊漁券のみ）<br>
+📞 0790-34-0960<br>
+※平日 8:30〜17:15
+`
+    },
+    {
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.09429725809919, 134.71443337203814],
+            [35.09446428745214, 134.71416543707693],
+            [35.094767027282344, 134.71362956715447],
+            [35.09496537345818, 134.71359767013527],
+            [35.094579119933854, 134.7141973340961],
+            [35.09439643181878, 134.71452268369188]
+        ],
+        name: `
+<b>🐠 によん釣りポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    },
+{
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.098082295612336, 134.71012268882473],
+            [35.09718647095839, 134.71025786264772],
+            [35.0971698815201, 134.71004158453093],
+            [35.098109944364836, 134.7098726172522]
+
+        ],
+        name: `
+<b>🐠 南小田橋釣りポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    },
+    {
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.11236291905528, 134.6745909311026],
+            [35.11200360006068, 134.6748596952634],
+            [35.11193420676366, 134.67482751456964],
+            [35.112145267520155, 134.67459630435013],
+            [35.112354424435125, 134.67450072129228]
+
+        ],
+        name: `
+<b>🐠 祇園橋釣りポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    },
+    {
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.11182008127981, 134.6750171534693],
+            [35.111786908181045, 134.67504756773988],
+            [35.11173161965309, 134.67504925742156],
+            [35.11170950423141, 134.6749968772889],
+            [35.11181178800638, 134.67494618683793]
+
+        ],
+        name: `
+<b>🐠 抜居地蔵釣りポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    },
+    {
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.10665805507766, 134.6777113875029],
+            [35.106280763452666, 134.67794795589896],
+            [35.106243620659406, 134.6778213081718],
+            [35.1065485820399, 134.67770660834339],
+            [35.106650235579835, 134.677661206328]
+
+        ],
+        name: `
+<b>🐠 上小田駐在所釣りポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    },
+    {
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.10533677495185, 134.6803248605422],
+            [35.105167813304014, 134.68086398453306],
+            [35.10535432938868, 134.68084252686177],
+            [35.10545746162872, 134.6804696998233],
+            [35.10546623883461, 134.68034900042238]
+
+        ],
+        name: `
+<b>🐠 もすの大榎釣りポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    },
+    {
+        type: "area",
+        fish: "amago",
+        coords: [
+            [35.10457611097379, 134.68558878124145],
+            [35.10453313541585, 134.68629794537765],
+            [35.1041356104308, 134.6879001310187],
+            [35.10442569642188, 134.68923966327597],
+            [35.104984377644044, 134.68998822541974],
+            [35.10480173228117, 134.69006702143486],
+            [35.10429676944217, 134.68926592861433],
+            [35.10401742695327, 134.6880051923722],
+            [35.10436123295754, 134.68641613940034],
+            [35.10442569642188, 134.68554938323388]
+
+        ],
+        name: `
+<b>🐠 ゲートボール場と旧線香工場釣り場ポイント</b><br>
+アマゴの放流位置で、よく釣れるポイントです。<br><br>
+
+<b>📅 解禁期間</b><br>
+3月1日 ～ 9月30日<br><br>
+
+<b>🎫 遊漁券販売所</b><br>
+立石酒店<br>
+📍 神河町南小田1467<br><br>
+
+<b>🏢 寺前漁業協同組合</b><br>
+📞 藤原：090-8655-2899<br>
+📞 立岩：090-3279-6628<br>
+📞 高松：090-3485-8110<br>
+📞 樋口：090-7490-6601<br>
+`
+    }
+    ]
+
+
+
+var ayuAreas = [];
+var amagoAreas = [];
+
+fishingpoint.forEach(function(point) {
+
+    if (point.type === "point") {
+
+        L.marker([point.lat, point.lng], {icon: fishIcon})
+            .addTo(map)
+            .bindPopup("🎣 " + point.name);
+    } else if (point.type === "area") {
+
+        var color, icon, label;
+
+        if (point.fish === "ayu") {
+    color = "#FFD700";
+    icon = ayuIcon;
+    label = "🐟 鮎エリア：";
+} else if (point.fish === "amago") {
+    color = "#4CAF50";
+    icon = amagoIcon;
+    label = "🐠 アマゴエリア：";
+} else {
+
+    console.log("fish未定义:", point);
+    return;
+}
+
+        var polygon = L.polygon(point.coords, {
+            color: color,
+            fillOpacity: 0.3
+        }).addTo(map);
+
+        polygon.bindPopup(label + point.name);
+
+
+        if (point.fish === "ayu") {
+            ayuAreas.push(polygon);
+        } else if (point.fish === "amago") {
+            amagoAreas.push(polygon);
+        }
+
+        var center = polygon.getBounds().getCenter();
+
+        L.marker(center, {icon: icon})
+            .addTo(map)
+            .bindPopup(label + point.name);
+    }
+})
+var hasAlertedAyu = false;
+var hasAlertedAmago = false;
+
+map.on('moveend', function() {
+
+    var center = map.getCenter();
+
+    var inAyu = false;
+    var inAmago = false;
+
+    // ⭐ 检测香鱼
+    for (var i = 0; i < ayuAreas.length; i++) {
+        if (ayuAreas[i].getBounds().contains(center)) {
+            inAyu = true;
+            break;
+        }
+    }
+
+    // ⭐ 检测アマゴ
+    for (var i = 0; i < amagoAreas.length; i++) {
+        if (amagoAreas[i].getBounds().contains(center)) {
+            inAmago = true;
+            break;
+        }
+    }
+
+
+    if (inAyu && !hasAlertedAyu) {
+        alert("🐟 鮎のエリアです！");
+        hasAlertedAyu = true;
+    } else if (!inAyu) {
+        hasAlertedAyu = false;
+    }
+
+    if (inAmago && !hasAlertedAmago) {
+        alert("🐠 アマゴの放流エリアです！");
+        hasAlertedAmago = true;
+    } else if (!inAmago) {
+        hasAlertedAmago = false;
+    }
+
+});
+
+//
+
+
+// 🚻 厕所
+var toilets = [
+    [35.06350142572445, 134.66495810735339],
+    [35.07238796706244, 134.66645569173548],
+    [35.010291981081416, 134.70690928648764],
+    [35.02742002626834, 134.75641529659976],
+    [35.02742002626834, 134.76753429335545],
+    [35.05299700697664, 134.75217948831192],
+    [35.05082977676639, 134.7685932454274],
+    [35.068267423154886, 134.73655215236963],
+    [35.09676055354818, 134.77661253459027],
+    [35.119528835954874, 134.7441510714628],
+    [35.11983507405083, 134.74939261680007],
+    [35.11736146095962, 134.8346909227798],
+    [35.04904026473854, 134.84105561362043]
+];
+
+toilets.forEach(function(coord, index) {
+    console.log("トイレ:", coord);
+
+    L.marker(coord, { icon: toiletIcon })
+        .addTo(map)
+        .bindPopup("🚻 トイレ" + (index + 1));
+});
+
+
+
+// =====================
+// 🅿️ 駐車場①
+// =====================
+
+var parking1 = [35.0861110879533, 134.7432261662107];
+L.marker(parking1,{ icon: parkingIcon }).addTo(map)
+    .bindPopup("🅿️ 大河公民館駐車場");
+
+   var parking2 = [35.07672642053433, 134.74743950745514];
+ L.marker(parking2,{ icon: parkingIcon}).addTo(map)
+    .bindPopup("🅿️ 大河集会所駐車場");
+
+   var parking3 = [35.05953092245995, 134.74073926217628];
+L.marker(parking3,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️小田原川合流駐車場");
+
+ var parking4 = [35.063221016410104, 134.74584260025142];
+L.marker(parking4,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️松駐車場");
+
+var parking5 = [35.064422886756134, 134.74261555767126];
+L.marker(parking5,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️寺前楽座まちの灯り駐車場");
+
+var parking6 = [35.064715669967306, 134.74333368465742];
+L.marker(parking6,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️有料駐車場");
+
+var parking7 = [35.05695882907991, 134.75407523996518];
+L.marker(parking7,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️松ヶ瀬グラウンド駐車場");
+
+var parking8 = [35.06749043007377, 134.74346140586448];
+L.marker(parking8,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️峰山高原リゾート（峰山高原スキー場）シャトルバス臨時無料駐車場");
+
+var parking9 = [35.0493822236001, 134.75399551349307];
+L.marker(parking9,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️野村墓地駐車場");
+
+var parking10 = [35.04217562368449, 134.75939672566764];
+L.marker(parking10,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️正善寺駐車場");
+
+var parking11 = [35.048705907064885, 134.7595879085644];
+L.marker(parking11,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️駐車スペースあり");
+
+var parking12 = [35.03685013471198, 134.76657742096293];
+L.marker(parking12,{ icon: parkingIcon}).addTo(map)
+.bindPopup("🅿️ 市川と越智川の合流付近に駐車スペースあり");
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>釣り支援システム</title>
+
+<style>
+body{
+    margin:0;
+    display:flex;
+    justify-content:center;
+    background:#d9edf4;
+}
+
+#loginPage{
+
+    width:100%;
+    height:100%;
+    background:#d9edf4;   /* 或白色都行 */
+           /* 压住原背景 */
+}
+.phone{
+
+    width:100%;
+
+    max-width:430px;
+
+    min-height:100vh;
+
+    position:relative;
+
+    background:url("/static/image/背景页面.png") no-repeat center top;
+
+   background-size:cover;
+
+    border-radius:30px;
+
+    overflow:hidden;
+
+    box-shadow:0 20px 50px rgba(0,0,0,.18);
+}
+.menu-btn{
+    width:100%;
+    padding:18px;
+    margin:15px 0;
+    border:none;
+    border-radius:20px;
+    background:#00bfa5;
+    color:white;
+    font-size:18px;
+}
+/* 页面 */
+.page{display:none;}
+.page.active{display:block;}
+
+/* 顶部 */
+.intro-text{
+    text-align:left;        /* ⭐ 左对齐 */
+    text-indent:1em;        /* ⭐ 首行空格 */
+
+    font-size:14px;
+    line-height:1.8;
+    color:#333;
+
+    width:80%;
+    margin:10px auto;
+}
+.hero{
+
+    text-align:center;
+
+    padding-top:28px;
+
+    padding-bottom:8px;
+
+}
+
+.hero h1{
+
+    font-size:22px;
+
+    margin:0;
+
+}
+
+.hero p{
+
+    font-size:12px;
+
+    margin-top:6px;
+
+    color:#567c72;
+
+}
+
+/* 主卡片 */
+/* 主卡片 */
+.main-card{
+    width:85%;
+    max-width:420px;
+
+    margin:18px auto;
+    padding:25px 20px 40px;  /* ⭐ 下边加大 */
+
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(15px);
+
+    border-radius:22px;
+    box-shadow:0 15px 40px rgba(0,0,0,.18);
+
+    min-height:260px;   /* ⭐ 关键：让它变长 */
+}
+/* 按钮 */
+.btn{
+    width:100%;
+
+    padding:16px;
+
+    border:none;
+
+    border-radius:24px;
+
+    margin-bottom:20px;
+
+    font-size:16px;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.btn:active{
+    transform:scale(.97);
+}
+
+
+
+.orange{background:linear-gradient(45deg,#ff9800,#ff5722);}
+.blue{background:linear-gradient(45deg,#2196F3,#03A9F4);}
+.green{background:linear-gradient(45deg,#4CAF50,#2E7D32);}
+
+/* 预览 */
+#preview{
+    width:100%;
+    border-radius:15px;
+    display:none;
+    margin-top:10px;
+}
+
+/* 规则 */
+.full-page{
+    min-width:100%;
+    height:100%;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:30px;
+    box-sizing:border-box;
+}
+.content{
+    width:100%;
+    max-width:320px;
+
+    text-align:center;
+
+    color:#2f5d50;
+}
+.content h2{
+    font-size:20px;
+    margin-bottom:20px;
+}
+.content p{
+    font-size:15px;
+    margin:10px 0;
+    line-height:1.6;
+}
+.hint{
+    margin-top:20px;
+    font-size:12px;
+    color:#6b8f86;
+}
+.content .btn{
+    margin-top:25px;
+}
+.welcome-card{
+    width:70%;
+    margin:18px auto;
+    padding:18px;
+
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(15px);
+
+    border-radius:20px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,0.15);
+
+    text-align:center;
+
+    animation:fadeUp .6s ease;
+}
+
+.welcome-card h3{
+    color:#2e7d32;
+    margin-bottom:10px;
+}
+
+.welcome-text{
+    font-size:14px;
+    color:#444;
+    line-height:1.6;
+}
+
+.welcome-tip{
+    margin-top:10px;
+    font-size:12px;
+    color:#6b8f86;
+}
+/* 结果 */
+.result{
+    text-align:center;
+    padding:20px;
+}
+
+.join-link {
+    margin-top: 20px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.join-link a {
+    color: #007AFF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.join-link a:hover {
+    text-decoration: underline;
+}
+/* 底部 */
+/* ⭐ 登录页整体布局 */
+.login-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;  /* 垂直居中 */
+    align-items: center;      /* 水平居中 */
+    text-align: center;
+    height: 100%;
+}
+
+/* ⭐ 登录按钮 */
+.login-page button {
+    margin-top: 30px;
+    width: 220px;
+    height: 65px;
+    font-size: 20px;
+
+    background: linear-gradient(45deg, #28a745, #34d058);
+    color: white;
+
+    border: none;
+    border-radius: 14px;
+
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+/* ⭐ 点击效果（高级感🔥） */
+.login-page button:active {
+    transform: scale(0.95);
+}
+
+
+/* ===== 地图页背景 ===== */
+.map-bg{
+    background:url("https://images.unsplash.com/photo-1501785888041-af3ef285b470") no-repeat center;
+    background-size:cover;
+    height:100vh;
+    position:relative;
+}
+.map-btn{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+
+    bottom:150px;   /* ⭐ 从300 → 150 */
+
+    width:80%;
+}
+
+/* ✅ 返回按钮（单独写！） */
+.back-btn{
+    position:absolute;   /* ⭐ 改这里 */
+
+    top:15px;
+    right:15px;
+
+    padding:8px 14px;
+    border:none;
+    border-radius:20px;
+
+    background:rgba(0,0,0,0.5);
+    color:white;
+
+    font-size:14px;
+    cursor:pointer;
+
+    backdrop-filter:blur(5px);
+    z-index:999;
+}
+/* ===== 半透明暗层 ===== */
+.map-overlay{
+    background:rgba(0,0,0,0.35);
+    height:100%;
+    padding:20px;
+
+    padding-top:80px;   /* ⭐ 新增：整体往下 */
+}
+
+/* ===== 文字卡片 ===== */
+.map-card{
+    background:rgba(0,0,0,0.4);
+    padding:20px;
+    border-radius:20px;
+    color:white;
+
+    backdrop-filter:blur(10px);
+
+    margin-top:20px;   /* ⭐ 再微调 */
+}
+
+/* ===== 标题 ===== */
+.map-card h2{
+    font-size:24px;
+    margin-bottom:15px;
+}
+.map-card p{
+    font-size:14px;
+    line-height:1.6;
+    margin-bottom:10px;
+}
+/* 外层居中 */
+.rule-wrapper{
+    display:flex;
+    justify-content:center;
+
+    align-items:flex-start;
+
+    height:100%;
+
+    padding:20px;
+    padding-top:80px;
+}
+
+/* ⭐ 白色卡片 */
+.rule-card{
+    width:90%;
+    max-width:360px;
+
+    background:rgba(255,255,255,0.95);
+    border-radius:20px;
+
+    padding:25px 20px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,0.2);
+
+    text-align:left;   /* ❗ 不居中 */
+}
+
+/* 标题 */
+/* 标题 */
+.rule-card h2{
+    text-align: center;
+    font-size: 24px;
+}
+
+/* 说明文字 */
+.rule-intro{
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 每一条规则 */
+.rule-item{
+    margin: 12px 0;
+    font-size: 16px;
+}
+
+/* ⭐ 红色禁止（就是你span那一行） */
+.rule-item span{
+    color: red;
+    font-weight: bold;
+    display: block; /* 换行更清晰 */
+    margin-top: 4px;
+}
+
+/* 最后一句 */
+.rule-note{
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.highlight{
+    color:#ffe082;
+    font-weight:bold;
+    text-align:center;
+    margin-top:10px;
+}
+/* ===== 底部鱼 ===== */
+
+</style>
+</head>
+
+<body>
+
+
+<!-- 首页 -->
+<div class="phone">
+    <div id="loginPage" class="page active">
+    <div class="login-page">
+
+        <h2>神河町のNPOの入会ご案内</h2>
+        <p class="intro-text">
+        本エリアの維持・管理・環境保全活動は、
+         会員の皆様のご協力によって支えられています。
+         </p>
+
+       <p class="intro-text">
+        持続可能な釣り場づくりのため、
+        ぜひご入会をお願いいたします。
+       </p>
+
+        <button onclick="enterApp()">システムを始まる</button>
+
+        <p class="join-link">
+            入会はこちら：
+            <a href="https://www.npohtf.com" target="_blank">
+                https://www.npohtf.com
+            </a>
+        </p>
+
+    </div>
+</div>
+
+<!-- 菜单页 -->
+<div id="menuPage" class="page">
+    <button class="back-btn" onclick="goTo('loginPage')">← 戻る</button>
+    <div class="hero">
+        <h1>メニュー</h1>
+        <p>機能を選択してください</p>
+    </div>
+    <div class="main-card">
+
+    <button class="btn blue" onclick="goTo('mapPage')">
+        地図を見る
+    </button>
+    <button class="btn green" onclick="goTo('rulePage')">
+        ルールを見る
+    </button>
+    <button class="btn orange" onclick="openCamera()">
+    📷 魚を識別
+    </button>
+
+</div>
+</div>
+<div id="home" class="page ">
+<button class="back-btn" onclick="goTo('menuPage')">← 戻る</button>
+<div class="hero">
+    <h1>釣り支援システム</h1>
+    <p>自然を楽しみ、未来へつなぐ釣りへ</p>
+</div><!-- 菜单页 -->
+
+<div class="main-card">
+
+<input type="file" id="fileInput" accept="image/*" hidden>
+
+<button class="btn orange" onclick="takePhoto()">📷 写真を撮る</button>
+<button class="btn blue" onclick="selectFile()">📁 アルバムから選ぶ</button>
+
+<p id="fileStatus" style="text-align:center;color:#888;">未選択</p>
+
+<button class="btn green" onclick="recognize()">🔍 AI識別する</button>
+
+</div>
+
+<div class="welcome-card">
+    <h3>🐟 ようこそ</h3>
+
+    <p class="welcome-text">
+        釣り支援システムへようこそ！<br><br>
+        写真を撮るだけで魚の種類をAIが判定します。<br>
+        釣り体験をもっと楽しく、便利に。
+    </p>
+
+    <p class="welcome-tip">
+        📸 まずは写真を撮って試してみましょう！
+    </p>
+</div>
+
+</div>
+
+<!-- 结果页 -->
+<div id="resultPage" class="page">
+      <button class="back-btn" onclick="goTo('menuPage')">← 戻る</button>
+<div class="result">
+<h2 id="fishName">🐟 未識別</h2>
+<p id="accuracy">精度：--%</p>
+<p id="fishType"></p>
+
+<div style="
+margin-top:10px;
+background:rgba(255,255,255,0.9);
+padding:12px;
+border-radius:12px;
+text-align:left;
+">
+<p id="fishDesc"></p>
+<p id="fishHabit"></p>
+</div>
+<button onclick="retry()" class="btn orange">🔁 もう一回撮る</button>
+<button onclick="openWiki()" class="btn blue">📖 Wikipedia</button>
+
+</div>
+</div>
+
+<!-- 地图 -->
+<div id="mapPage" class="page">
+<button class="back-btn" onclick="goTo('menuPage')">← 戻る</button>
+    <div class="map-bg">
+
+        <div class="map-overlay">
+
+            <div class="map-card">
+                <h2>新しい釣り場の未来</h2>
+
+                <p>
+                私たちは釣り人として、環境保全と地域づくりに取り組んでいます。
+                </p>
+
+                <p>
+                これからの釣り場は、<br>
+                「与えられる場所」ではなく<br>
+                「自ら守り育てる場所」へ。
+                </p>
+
+                <p class="highlight">
+                皆さん、楽しい釣りを！
+                </p>
+            </div>
+
+        </div>
+
+        <!-- ⭐ 按钮放这里（关键） -->
+       <button class="btn green map-btn" onclick="goRealMap()">
+    👉 地図を開く
+</button>
+
+    </div>
+
+</div>
+<div id="rulePage" class="page">
+    <button class="back-btn" onclick="goTo('menuPage')">← 戻る</button>
+
+    <div class="rule-wrapper">
+        <div class="rule-card">
+
+            <h2>釣り場のルール</h2>
+
+            <p class="rule-intro">
+                神河C&Rエリアでは、以下のルールを守ってください。
+            </p>
+
+            <div class="rule-item">
+                ① バーブレスシングルフックのみ<br>
+                <span>ダブル・トリプルフックは禁止</span>
+            </div>
+
+            <div class="rule-item">
+                ② 釣り場に落ちているゴミの持ち帰り
+            </div>
+
+            <div class="rule-item">
+                ③ キャッチアンドリリース（持ち帰り禁止）
+            </div>
+
+            <p class="rule-note">
+                ルールを守って楽しい釣りを！
+            </p>
+
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+let selectedFile=null;
+let currentFish="";
+function openCamera(){
+    showPage("home"); // 或 cameraPage
+}
+function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+
+
+}
+
+function takePhoto(){document.getElementById("fileInput").click();}
+function selectFile(){document.getElementById("fileInput").click();}
+
+document.getElementById("fileInput").addEventListener("change",e=>{
+    selectedFile=e.target.files[0];
+
+    if(selectedFile){
+        document.getElementById("fileStatus").innerText="写真をチェックした";
+
+        let url=URL.createObjectURL(selectedFile);
+        let img=document.getElementById("preview");
+        img.src=url;
+        img.style.display="block";
+    }
+});
+
+async function recognize(){
+
+    if(!selectedFile){
+        alert("写真を選択して！");
+        return;
+    }
+
+    let formData=new FormData();
+    formData.append("file",selectedFile);
+
+    try{
+
+        // ⭐ 先请求
+        let res = await fetch("/predict",{method:"POST",body:formData});
+        let data = await res.json();
+
+document.getElementById("fishDesc").innerText = "外見：" + data.feature;
+document.getElementById("fishHabit").innerText = "習性：" + data.habit;
+        let typeText="";
+        if(data["種類識別"]==="外来種"){
+            typeText="⚠ 外来種";
+        }else if(data["種類識別"]==="保護種"){
+            typeText="🛑 保護種";
+        }else{
+            typeText="🌿 在来種";
+        }
+
+        document.getElementById("fishType").innerText=typeText;
+        currentFish=data.name;
+
+        let acc = parseFloat(data.confidence);
+
+        document.getElementById("fishName").innerText = "🐟 " + data.name;
+
+        let levelText = "";
+
+        if(acc >= 90){
+            levelText = " ⭐ 高精度";
+        }else if(acc >= 60){
+            levelText = " ⚠ 中精度";
+        }else{
+            levelText = " ❗ 低精度（再識別したほうがいい）";
+        }
+
+        document.getElementById("accuracy").innerText = "精度：" + acc + "%" + levelText;
+
+        if(acc < 60){
+            alert("精度が低いため、再識別をおすすめします！");
+        }
+
+        showPage("resultPage");
+
+    }catch(e){
+    console.error(e);
+
+    alert(
+        "識別に失敗しました！\n\n" +
+        "原因：" + e.message
+    );
+}
+
+}
+/* ⭐ 外見・習性 */
+
+
+
+function retry(){
+
+ selectedFile = null;
+
+    document.getElementById("fileInput").value = "";
+    document.getElementById("preview").style.display = "none";
+    document.getElementById("fileStatus").innerText = "未選択";
+
+    // 返回首页
+showPage("home");
+}
+
+function openWiki(){
+    if(!currentFish){
+        alert("まず、識別してください");
+        return;
+    }
+    window.open("https://ja.wikipedia.org/wiki/"+encodeURIComponent(currentFish));
+}
+function enterApp(){
+    showPage("menuPage");
+}
+function goRealMap(){
+    window.location.href = "/map";
+}
+function goTo(pageId){
+    // 先隐藏所有页面
+    document.querySelectorAll(".page").forEach(p=>{
+        p.classList.remove("active");
+    });
+
+    // 再显示目标页面
+    document.getElementById(pageId).classList.add("active");
+}
+
+
+</script>
+
+</body>
+</html>
