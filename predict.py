@@ -50,6 +50,7 @@ def load_model():
         print("✅ 模型加载完成")
 
 def predict_image(img_path):
+    print("图片路径:", img_path)
     load_model()  # ❗这里才加载模型
 
     image = Image.open(img_path).convert("RGB")

@@ -342,6 +342,15 @@ body{
     line-height:1.6;
     margin-bottom:10px;
 }
+.compass-btn {
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+
+    bottom:60px;   /* ⭐ 从300 → 150 */
+
+    width:80%;
+}
 /* 外层居中 */
 .rule-wrapper{
     display:flex;
@@ -477,7 +486,21 @@ body{
 
 <div class="main-card">
 
-<input type="file" id="fileInput" accept="image/*" hidden>
+
+<input
+    type="file"
+    id="cameraInput"
+    accept="image/*"
+    capture="camera"
+    hidden>
+
+
+
+<input
+    type="file"
+    id="albumInput"
+    accept="image/*"
+    hidden>
 
 <button class="btn orange" onclick="takePhoto()">📷 写真を撮る</button>
 <button class="btn blue" onclick="selectFile()">📁 アルバムから選ぶ</button>
@@ -485,7 +508,11 @@ body{
 <p id="fileStatus" style="text-align:center;color:#888;">未選択</p>
 
 <button class="btn green" onclick="recognize()">🔍 AI識別する</button>
-
+<img
+    id="preview"
+    src=""
+    alt="preview"
+    style="display:none;">
 </div>
 
 <div class="welcome-card">
@@ -559,6 +586,9 @@ text-align:left;
        <button class="btn green map-btn" onclick="goRealMap()">
     👉 地図を開く
 </button>
+<button class="btn green compass-btn" onclick="requestOrientationPermission()">
+            📱 方向ON
+        </button>
 
     </div>
 
@@ -610,21 +640,62 @@ function showPage(id){
 
 }
 
-function takePhoto(){document.getElementById("fileInput").click();}
-function selectFile(){document.getElementById("fileInput").click();}
+function takePhoto(){
 
-document.getElementById("fileInput").addEventListener("change",e=>{
-    selectedFile=e.target.files[0];
+    document.getElementById("cameraInput").click();
+
+}
+
+
+function selectFile(){
+
+    document.getElementById("albumInput").click();
+
+}
+
+function handleFile(e){
+
+    selectedFile = e.target.files[0];
+
 
     if(selectedFile){
-        document.getElementById("fileStatus").innerText="写真をチェックした";
 
-        let url=URL.createObjectURL(selectedFile);
-        let img=document.getElementById("preview");
-        img.src=url;
-        img.style.display="block";
+        document.getElementById("fileStatus")
+        .innerText="写真をチェックした";
+
+
+        let url = URL.createObjectURL(selectedFile);
+
+
+        let img = document.getElementById("preview");
+
+
+        if(img){
+
+            img.src = url;
+            img.style.display = "block";
+
+        }
+
     }
-});
+
+}
+
+
+// 📷 相机
+document.getElementById("cameraInput")
+.addEventListener(
+    "change",
+    handleFile
+);
+
+
+// 📁 相册
+document.getElementById("albumInput")
+.addEventListener(
+    "change",
+    handleFile
+);
 
 async function recognize(){
 
@@ -690,41 +761,55 @@ document.getElementById("fishHabit").innerText = "習性：" + data.habit;
 }
 /* ⭐ 外見・習性 */
 
-
-
 function retry(){
 
- selectedFile = null;
+    selectedFile = null;
 
-    document.getElementById("fileInput").value = "";
-    document.getElementById("preview").style.display = "none";
-    document.getElementById("fileStatus").innerText = "未選択";
+    document.getElementById("cameraInput").value="";
+    document.getElementById("albumInput").value="";
 
-    // 返回首页
-showPage("home");
+    let preview = document.getElementById("preview");
+
+    if(preview){
+        preview.style.display = "none";
+    }
+
+    document.getElementById("fileStatus").innerText="未選択";
+
+    showPage("home");
 }
 
-function openWiki(){
-    if(!currentFish){
+
+function openWiki() {
+    if (!currentFish) {
         alert("まず、識別してください");
         return;
     }
-    window.open("https://ja.wikipedia.org/wiki/"+encodeURIComponent(currentFish));
+    window.open("https://ja.wikipedia.org/wiki/" + encodeURIComponent(currentFish));
 }
-function enterApp(){
+
+function enterApp() {
     showPage("menuPage");
 }
-function goRealMap(){
+
+function goRealMap() {
     window.location.href = "/map";
 }
-function goTo(pageId){
-    // 先隐藏所有页面
-    document.querySelectorAll(".page").forEach(p=>{
+
+function goTo(pageId) {
+
+    document.querySelectorAll(".page").forEach(p => {
         p.classList.remove("active");
     });
 
-    // 再显示目标页面
     document.getElementById(pageId).classList.add("active");
+
+    // ⭐⭐ 关键！！！！
+    if (pageId === "mapPage") {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 500); // ⚠️ 必须延迟
+    }
 }
 
 

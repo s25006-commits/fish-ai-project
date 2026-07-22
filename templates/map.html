@@ -601,6 +601,68 @@ dangerZones.forEach(function(zone) {
 });
 
 
+
+// 👉 统一处理函数
+function handleOrientation(event){
+
+    if(event.alpha !== null){
+
+        currentHeading = 360 - event.alpha;
+
+        console.log(
+            "手机方向:",
+            currentHeading
+        );
+
+
+        // ⭐ 实时旋转箭头
+        if(userMarker){
+
+            userMarker.setRotationAngle(
+                currentHeading
+            );
+
+        }
+
+    }
+
+}
+
+
+function requestOrientationPermission() {
+
+    if (
+        typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
+
+        DeviceOrientationEvent.requestPermission()
+            .then(response => {
+
+                if (response === "granted") {
+
+                    window.addEventListener(
+                        "deviceorientation",
+                        handleOrientation
+                    );
+
+                } else {
+                    alert("方向センサー許可が必要です");
+                }
+
+            })
+            .catch(console.error);
+
+    } else {
+
+        // 👉 安卓 / 普通浏览器
+        window.addEventListener(
+            "deviceorientation",
+            handleOrientation
+        );
+
+    }
+}
 // =====================
 // 🟢 实时定位（核心🔥）
 // =====================
@@ -618,45 +680,44 @@ function(position) {
     console.log("GPS:", lat, lng);
 
 
-
     // =====================
     // 📍 1. 更新位置
     // =====================
-
     if (!userMarker) {
 
-        userMarker = L.marker(userLatLng, {
-            icon: arrowIcon
-        })
-        .addTo(map)
-        .bindPopup("📍 あなたの現在地");
+    userMarker = L.marker(userLatLng,{
+        icon:arrowIcon
+    })
+    .addTo(map)
+    .bindPopup("📍 あなたの現在地");
 
 
-        map.setView(userLatLng,16);
+    map.setView(userLatLng,16);
+
+}
+else{
+
+    userMarker.setLatLng(userLatLng);
+
+}
 
 
-    } else {
+if(
+    userMarker &&
+    typeof userMarker.setRotationAngle === "function"
+){
 
-        userMarker.setLatLng(userLatLng);
+    userMarker.setRotationAngle(
+        currentHeading
+    );
 
-    }
-
-
-
-    if(userMarker.setRotationAngle){
-
-        userMarker.setRotationAngle(currentHeading);
-
-    }
-
-
+}
 
     // =====================
     // 🚫 2. 禁钓区域判断
     // =====================
 
     var insideRestricted = false;
-
 
     polygons.forEach(function(polygon){
 
@@ -677,7 +738,6 @@ function(position) {
 
     }
 
-
     if(!insideRestricted){
 
         inRestrictedZone=false;
@@ -693,7 +753,6 @@ function(position) {
     // =====================
 
     var insideDanger=false;
-
 
     dangerPolygons.forEach(function(polygon){
 
@@ -773,8 +832,6 @@ function(error){
 
 
 },
-
-
 
 {
 
