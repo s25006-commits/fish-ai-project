@@ -710,8 +710,17 @@ async function recognize(){
     try{
 
         // ⭐ 先请求
-        let res = await fetch("/predict",{method:"POST",body:formData});
-        let data = await res.json();
+        let res = await fetch("/predict", {
+    method: "POST",
+    body: formData
+});
+
+console.log("📡 状态码:", res.status);
+
+let text = await res.text();
+console.log("📦 原始返回:", text);
+
+let data = JSON.parse(text);
 
 document.getElementById("fishDesc").innerText = "外見：" + data.feature;
 document.getElementById("fishHabit").innerText = "習性：" + data.habit;
