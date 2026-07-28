@@ -90,8 +90,22 @@
 <body>
 
 <div id="map">
-
 </div>
+<button onclick="stopSound()"
+        style="
+            position:absolute;
+            top:80px;
+            right:10px;
+            z-index:1000;
+            padding:10px;
+            background:red;
+            color:white;
+            border:none;
+            border-radius:8px;
+        ">
+        🔇 音を消す
+    </button>
+
 <div id="legend">
     <b>📍 マップ説明</b><br>
 
@@ -516,16 +530,13 @@ var dangerPolygons = [];  // 危险区域
 
 var inRestrictedZone = false;
 var inDangerZone = false;
+var alertSound = new Audio('/static/alarm.mp3')
+alertSound.loop = true;
 
+var soundEnabled = true;   // 用户是否允许声音
+var alertPlaying = false;  // 当前是否正在播放
 
 // =====================
-// 🟢 方向传感器
-// =====================
-window.addEventListener("deviceorientation", function(event) {
-    currentHeading = event.alpha || 0;
-});
-
-
 // =====================
 // 🟢 初始化禁钓区域
 // =====================
@@ -693,24 +704,17 @@ function(position) {
 
 
     map.setView(userLatLng,16);
-
 }
 else{
-
     userMarker.setLatLng(userLatLng);
-
 }
-
-
 if(
     userMarker &&
     typeof userMarker.setRotationAngle === "function"
 ){
-
     userMarker.setRotationAngle(
         currentHeading
     );
-
 }
 
     // =====================
@@ -730,24 +734,6 @@ if(
     });
 
 
-
-    if(insideRestricted && !inRestrictedZone){
-
-        alert("🚫 禁釣区域に入りました！");
-        inRestrictedZone=true;
-
-    }
-
-    if(!insideRestricted){
-
-        inRestrictedZone=false;
-
-    }
-
-
-
-
-
     // =====================
     // ⚠ 3. 危险区域判断
     // =====================
@@ -763,27 +749,39 @@ if(
         }
 
     });
+// 🚫 禁钓
+if(insideRestricted && !inRestrictedZone){
+    alert("🚫 禁釣区域に入りました！");
+}
+
+// ⚠️ 危险
+if(insideDanger && !inDangerZone){
+    alert("⚠ 危険区域入りました、注意して！");
+}
+// 🚨 播放
+if(
+    (insideRestricted || insideDanger) &&
+    !alertPlaying &&
+    soundEnabled
+){
+    alertSound.play();
+    alertPlaying = true;
+}
 
 
+// 🛑 停止
+if(!insideRestricted && !insideDanger){
 
-    if(insideDanger && !inDangerZone){
+    alertSound.pause();
+    alertSound.currentTime = 0;
 
-        alert("⚠ 危険区域入りました、注意して！");
-        inDangerZone=true;
+    alertPlaying = false;
 
-    }
+    soundEnabled = true; // ⭐ 离开后恢复
+}
 
-
-    if(!insideDanger){
-
-        inDangerZone=false;
-
-    }
-
-
-
-
-
+inRestrictedZone = insideRestricted;
+inDangerZone = insideDanger;
     // =====================
     // 🔺 4. 扇形更新
     // =====================
@@ -840,6 +838,15 @@ function(error){
     maximumAge:0,
 
     timeout:10000
+
+},
+function stopSound(){
+
+    alertSound.pause();
+    alertSound.currentTime = 0;
+
+    alertPlaying = false;
+    soundEnabled = false; // 用户手动关闭
 
 }
 
