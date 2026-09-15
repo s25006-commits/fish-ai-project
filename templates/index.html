@@ -220,6 +220,240 @@ body{
     font-size:12px;
     color:#6b8f86;
 }
+/* ===== 魚の撮影注意ボタン ===== */
+.photo-tip-btn{
+    width:100%;
+    padding:15px 10px;
+    border:none;
+    border-radius:20px;
+    background:linear-gradient(45deg,#2196F3,#03A9F4);
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.photo-tip-btn:active{
+    transform:scale(0.97);
+}
+/* ===== 魚の撮影注意事項ポップアップ ===== */
+
+/* ===== 魚の撮影注意事項ポップアップ ===== */
+
+.photo-tips-overlay{
+    display:none;
+
+    position:fixed;
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:rgba(0,0,0,0.55);
+
+    z-index:2000;
+
+    justify-content:center;
+    align-items:center;
+
+    padding:15px;
+    box-sizing:border-box;
+}
+
+
+/* 白色弹窗 */
+.photo-tips-card{
+    width:90%;
+    max-width:360px;
+
+    max-height:80vh;
+
+    overflow-y:auto;
+
+    background:rgba(255,255,255,0.97);
+
+    border-radius:22px;
+
+    padding:18px 12px 20px;
+
+    box-sizing:border-box;
+
+    box-shadow:0 15px 40px rgba(0,0,0,0.3);
+}
+
+
+/* 标题 */
+.photo-tips-card h2{
+    text-align:center;
+
+    color:#2f5d50;
+
+    font-size:20px;
+
+    margin-top:0;
+    margin-bottom:15px;
+}
+
+
+/* 每一条注意事项 */
+.photo-tip-section{
+    background:#f3faf9;
+
+    border:1px solid #d7eeee;
+
+    border-radius:18px;
+
+    padding:12px;
+
+    margin-bottom:15px;
+}
+
+
+/* 标题 */
+.photo-tip-section h3{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    color:#147c72;
+
+    font-size:17px;
+
+    margin:0 0 8px;
+}
+
+
+/* 数字圆圈 */
+.tip-number{
+    display:inline-flex;
+
+    justify-content:center;
+    align-items:center;
+
+    width:32px;
+    height:32px;
+
+    border-radius:50%;
+
+    background:#12a89d;
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+    flex-shrink:0;
+}
+
+
+/* 注意事项文字 */
+.photo-tip-section > p{
+    font-size:13px;
+
+    line-height:1.6;
+
+    color:#333;
+
+    margin:6px 0 12px;
+}
+
+
+/* ===== 良い例 / 悪い例 ===== */
+
+.example-container{
+    display:flex;
+
+    gap:8px;
+
+    width:100%;
+}
+
+
+/* 两张图片各占一半 */
+.example{
+    flex:1;
+
+    min-width:0;
+}
+
+
+/* 良い例 / 悪い例 标题 */
+.example-title{
+    text-align:center;
+
+    color:white;
+
+    font-size:13px;
+
+    font-weight:bold;
+
+    padding:5px;
+
+    border-radius:10px 10px 0 0;
+}
+
+
+/* 良い例 */
+.example.good .example-title{
+    background:#16a085;
+}
+
+
+/* 悪い例 */
+.example.bad .example-title{
+    background:#ed5555;
+}
+
+
+/* ⭐ 图片尺寸就在这里控制 */
+.example img{
+    display:block;
+
+    width:100%;
+
+    height:80px;
+
+    object-fit:cover;
+
+    border-radius:0 0 10px 10px;
+}
+
+
+/* 关闭按钮 */
+.photo-tips-card .btn{
+    margin-top:5px;
+
+    margin-bottom:0;
+}
+/* ===== 良い例・悪い例 图片大小 ===== */
+
+.example-container{
+    display:flex;
+    gap:8px;
+    width:100%;
+}
+
+.example{
+    flex:1;
+    min-width:0;
+}
+
+.example img{
+    display:block !important;
+
+    width:100% !important;
+    height:80px !important;
+
+    max-width:100% !important;
+
+    object-fit:cover;
+
+    border-radius:0 0 10px 10px;
+}
 /* 结果 */
 .result{
     text-align:center;
@@ -468,11 +702,11 @@ body{
     <button class="btn blue" onclick="goRealMap()">
         地図を見る
     </button>
-    <button class="btn green" onclick="goTo('rulePage')">
-        ルールを見る
+    <button class="btn green" onclick="openCamera()">
+       📷 魚を識別
     </button>
-    <button class="btn orange" onclick="openCamera()">
-    📷 魚を識別
+    <button class="btn orange" onclick="goTo('rulePage')">
+    ルールを見る
     </button>
 
 </div>
@@ -516,17 +750,9 @@ body{
 </div>
 
 <div class="welcome-card">
-    <h3>🐟 ようこそ</h3>
-
-    <p class="welcome-text">
-        釣り支援システムへようこそ！<br><br>
-        写真を撮るだけで魚の種類をAIが判定します。<br>
-        釣り体験をもっと楽しく、便利に。
-    </p>
-
-    <p class="welcome-tip">
-        📸 まずは写真を撮って試してみましょう！
-    </p>
+    <button class="photo-tip-btn" onclick="openPhotoTips()">
+        📸 魚を撮影するときの注意点
+    </button>
 </div>
 
 </div>
@@ -548,9 +774,15 @@ text-align:left;
 ">
 <p id="fishDesc"></p>
 <p id="fishHabit"></p>
+    <p id="fishCaution"></p>
 </div>
-<button onclick="retry()" class="btn orange">🔁 もう一回撮る</button>
-<button onclick="openWiki()" class="btn blue">📖 Wikipedia</button>
+<button id="retryButton" onclick="retry()" class="btn orange">
+    🔁 もう一回撮る
+</button>
+
+<button id="wikiButton" onclick="openWiki()" class="btn blue">
+    📖 Wikipedia
+</button>
 
 </div>
 </div>
@@ -626,6 +858,119 @@ text-align:left;
     </div>
 </div>
 </div>
+<!-- ===== 魚の撮影注意事項 ===== -->
+<!-- ===== 魚の撮影注意事項 ===== -->
+<div id="photoTips" class="photo-tips-overlay">
+
+    <div class="photo-tips-card">
+
+        <h2>📸 魚を撮影するときの注意点</h2>
+
+        <p class="photo-tips-intro">
+            正しく魚を識別するために、以下のポイントを注意してください。
+        </p>
+
+
+        <!-- ① 光線 -->
+        <div class="photo-tip-section">
+
+            <h3>
+                <span class="tip-number">1</span>
+                注意点1
+            </h3>
+
+            <p>
+                明るい場所で撮影してください。<br>
+                魚が画面の大部分を占めるようにし、<br>
+                できるだけ画面の中央に写してください。
+            </p>
+
+            <div class="example-container">
+
+                <div class="example good">
+                    <div class="example-title">✓ 良い例</div>
+                    <img src="/static/image/images%20(3).jpg">
+                </div>
+
+                <div class="example bad">
+                    <div class="example-title">✕ 悪い例</div>
+                    <img src="/static/image/image4.jpg">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ② 側面 -->
+        <div class="photo-tip-section">
+
+            <h3>
+                <span class="tip-number">2</span>
+                注意点2
+            </h3>
+
+            <p>
+                魚の側面が見えるように撮影してください。<br>
+                できるだけ魚の全身が画面に入るようにしてください。
+            </p>
+
+            <div class="example-container">
+
+                <div class="example good">
+                    <div class="example-title">✓ 良い例</div>
+                    <img src="/static/image/下载.jpg">
+                </div>
+
+                <div class="example bad">
+                    <div class="example-title">✕ 悪い例</div>
+                    <img src="/static/image/images%20(7).jpg">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ③ 一匹 -->
+        <div class="photo-tip-section">
+
+            <h3>
+                <span class="tip-number">3</span>
+                注意点3
+            </h3>
+
+            <p>
+                一度の撮影では、魚を一匹だけ写してください。<br>
+                複数の魚が同時に写っている場合、<br>
+                正しく識別できない可能性があります。
+            </p>
+
+            <div class="example-container">
+
+                <div class="example good">
+                    <div class="example-title">✓ 良い例</div>
+                    <img src="/static/image/image8.jpg">
+                </div>
+
+                <div class="example bad">
+                    <div class="example-title">✕ 悪い例</div>
+                    <img src="/static/image/image9.jpg">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <button class="btn green" onclick="closePhotoTips()">
+            閉じる
+        </button>
+
+    </div>
+
+</div>
+
 
 <script>
 let selectedFile=null;
@@ -721,40 +1066,91 @@ let text = await res.text();
 console.log("📦 原始返回:", text);
 
 let data = JSON.parse(text);
-
+console.log("caution =", data.caution);
+console.log("完整返回 =", data);
 document.getElementById("fishDesc").innerText = "外見：" + data.feature;
 document.getElementById("fishHabit").innerText = "習性：" + data.habit;
+document.getElementById("fishCaution").innerText ="⚠️ 注意:ナマズは汚れた水環境に生息している場合があります。衛生面に十分注意し、できれば持ち帰って食べることは避けましょう;" + data.caution;
         let typeText="";
-        if(data["種類識別"]==="外来種"){
-            typeText="⚠ 外来種";
-        }else if(data["種類識別"]==="保護種"){
-            typeText="🛑 保護種";
-        }else{
-            typeText="🌿 在来種";
-        }
+
+if(data["種類識別"]==="外来種"){
+    typeText="⚠ 外来種";
+
+}else if(data["種類識別"]==="保護種"){
+    typeText="🛑 保護種";
+
+}else if(data["種類識別"]==="在来種"){
+    typeText="🌿 在来種";
+
+}else if(data["種類識別"]==="不明"){
+    typeText="❓ 不明";
+}
+
+document.getElementById("fishType").innerText=typeText;
 
         document.getElementById("fishType").innerText=typeText;
-        currentFish=data.name;
+        currentFish = data.name;
 
-        let acc = parseFloat(data.confidence);
+document.getElementById("fishName").innerText =
+    "🐟 " + data.name;
 
-        document.getElementById("fishName").innerText = "🐟 " + data.name;
 
-        let levelText = "";
+// ==========================================
+// ❓ 不明魚種
+// ==========================================
 
-        if(acc >= 90){
-            levelText = " ⭐ 高精度";
-        }else if(acc >= 60){
-            levelText = " ⚠ 中精度";
-        }else{
-            levelText = " ❗ 低精度（再識別したほうがいい）";
-        }
+if(data.name === "不明"){
 
-        document.getElementById("accuracy").innerText = "精度：" + acc + "%" + levelText;
+    // 精度を表示しない
+    document.getElementById("accuracy").innerText = "";
 
-        if(acc < 60){
-            alert("精度が低いため、再識別をおすすめします！");
-        }
+    // 「不明」と表示
+    document.getElementById("fishType").innerText = "❓ 不明";
+
+    // もう一度撮る → 非表示
+    document.getElementById("retryButton").style.display = "none";
+
+    // Wikipedia → 非表示
+    document.getElementById("wikiButton").style.display = "none";
+
+
+// ==========================================
+// 🐟 登録されている魚
+// ==========================================
+
+}else{
+
+    let acc = parseFloat(data.confidence);
+
+    let levelText = "";
+
+    if(acc >= 80){
+        levelText = " ⭐ 高精度";
+
+    }else if(acc >= 60){
+        levelText = " ⚠ 中精度";
+
+    }else{
+        levelText = " ❗ 低精度（再識別したほうがいい）";
+    }
+
+    document.getElementById("accuracy").innerText =
+        "精度：" + acc + "%" + levelText;
+
+
+    // もう一度撮る → 表示
+    document.getElementById("retryButton").style.display = "block";
+
+    // Wikipedia → 表示
+    document.getElementById("wikiButton").style.display = "block";
+
+
+    if(acc < 60){
+        alert(
+            "精度が低いため、魚をもう一度撮影することをおすすめします！"
+        );
+    }
+}
 
         showPage("resultPage");
 
@@ -804,7 +1200,15 @@ function enterApp() {
 function goRealMap() {
     window.location.href = "/map";
 }
+// ===== 魚の撮影注意事項 =====
 
+function openPhotoTips(){
+    document.getElementById("photoTips").style.display = "flex";
+}
+
+function closePhotoTips(){
+    document.getElementById("photoTips").style.display = "none";
+}
 function goTo(pageId) {
 
     document.querySelectorAll(".page").forEach(p => {

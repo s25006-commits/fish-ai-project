@@ -64,7 +64,8 @@ def predict():
             "confidence": f"{conf*100:.2f}",
             "feature": info["外見"],
             "habit": info["習性"],
-            "種類識別": info["type"]
+            "種類識別": info["type"],
+            "caution": info.get("注意", "")
 
         })
 

@@ -1,12 +1,15 @@
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
 from torchvision import datasets, transforms, models
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Dataset
+
 from PIL import Image
 
 import random
+from collections import Counter
 
 
 # ============================================================
@@ -15,16 +18,24 @@ import random
 
 DATASET_DIR = "dataset"
 
-BATCH_SIZE = 32
-EPOCHS = 20
+BATCH_SIZE = 16
 
-# 每张图片在训练过程中产生多少种随机变化
-AUGMENT_TIMES = 15
+EPOCHS = 30
 
+# ⭐ 不再15倍，降低对原始素材的过拟合
+AUGMENT_TIMES = 12
+
+# ⭐ 只针对虹鳟增加训练机会
+CLASS_AUGMENT_TIMES = {
+    "nijimasu": 18
+}
 TRAIN_RATIO = 0.8
 
 random.seed(42)
 torch.manual_seed(42)
+
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(42)
 
 
 # ============================================================
@@ -37,7 +48,7 @@ train_transform = transforms.Compose([
 
     transforms.RandomResizedCrop(
         224,
-        scale=(0.85, 1.0)
+        scale=(0.80, 1.0)
     ),
 
     transforms.RandomHorizontalFlip(
@@ -48,10 +59,22 @@ train_transform = transforms.Compose([
         15
     ),
 
+    transforms.RandomAffine(
+        degrees=0,
+        translate=(0.08, 0.08),
+        scale=(0.90, 1.10)
+    ),
+
     transforms.ColorJitter(
-        brightness=0.2,
-        contrast=0.2,
-        saturation=0.2
+        brightness=0.25,
+        contrast=0.25,
+        saturation=0.25,
+        hue=0.05
+    ),
+
+    # ⭐ 偶尔降低颜色依赖
+    transforms.RandomGrayscale(
+        p=0.05
     ),
 
     transforms.ToTensor(),
@@ -63,7 +86,10 @@ train_transform = transforms.Compose([
 ])
 
 
-# 验证集不要数据增强
+# ============================================================
+# 3. 验证集
+# ============================================================
+
 val_transform = transforms.Compose([
 
     transforms.Resize((224, 224)),
@@ -78,13 +104,45 @@ val_transform = transforms.Compose([
 
 
 # ============================================================
-# 3. 读取原始数据
+# 4. 读取原始数据
 # ============================================================
 
-# 先读取，不进行增强
-base_dataset = datasets.ImageFolder(
-    DATASET_DIR
+
+
+print("================================")
+print("当前工作目录：", os.getcwd())
+print("dataset实际位置：", os.path.abspath(DATASET_DIR))
+print("================================")
+
+base_dataset = datasets.ImageFolder(DATASET_DIR)
+
+print("ImageFolder读取图片数量：", len(base_dataset.samples))
+
+missing_files = []
+
+for path, label in base_dataset.samples:
+    if not os.path.isfile(path):
+        missing_files.append(path)
+
+print("不存在的图片数量：", len(missing_files))
+
+for path in missing_files:
+    print("❌ 找不到：", path)
+print("\n===== 检查 nijimasu 文件夹 =====")
+
+nijimasu_dir = os.path.abspath(
+    os.path.join(DATASET_DIR, "nijimasu")
 )
+
+print("实际文件夹：", nijimasu_dir)
+
+files = os.listdir(nijimasu_dir)
+
+print("文件夹实际文件数量：", len(files))
+
+for filename in files:
+    print(filename)
+print("================================")
 
 print("================================")
 print("鱼种类别：")
@@ -100,7 +158,28 @@ print(
 
 
 # ============================================================
-# 4. 每个类别进行 80% / 20% 划分
+# 5. 检查每种鱼的图片数量
+# ============================================================
+
+class_counts = Counter(
+    base_dataset.targets
+)
+
+print()
+print("===== 各鱼种原始图片数量 =====")
+
+for class_id, class_name in enumerate(
+    base_dataset.classes
+):
+
+    print(
+        f"{class_name:12s} : "
+        f"{class_counts[class_id]} 张"
+    )
+
+
+# ============================================================
+# 6. 每个类别分别进行 80% / 20% 划分
 # ============================================================
 
 train_indices = []
@@ -109,19 +188,24 @@ val_indices = []
 
 for class_id in range(num_classes):
 
-    # 找出当前鱼种的所有图片
     class_indices = [
+
         i
+
         for i, label in enumerate(
             base_dataset.targets
         )
+
         if label == class_id
     ]
 
-    random.shuffle(class_indices)
+    random.shuffle(
+        class_indices
+    )
 
     train_size = int(
-        len(class_indices) * TRAIN_RATIO
+        len(class_indices)
+        * TRAIN_RATIO
     )
 
     train_indices.extend(
@@ -139,149 +223,97 @@ print("验证原图：", len(val_indices))
 
 
 # ============================================================
-# 5. 自定义训练 Dataset
-#
-# 每张原图每次读取时随机增强
+# 7. 自定义 Dataset
 # ============================================================
 
-class AugmentedDataset(torch.utils.data.Dataset):
+class AugmentedDataset(Dataset):
 
     def __init__(
         self,
         dataset,
         indices,
         transform,
-        augment_times=15
+        default_augment_times=12,
+        class_augment_times=None
     ):
 
         self.dataset = dataset
-
         self.indices = indices
-
         self.transform = transform
 
-        self.augment_times = augment_times
+        self.default_augment_times = default_augment_times
+        self.class_augment_times = class_augment_times or {}
+
+        # ⭐ 每张图片按照所属类别决定增强次数
+        self.samples = []
+
+        for real_index in self.indices:
+
+            label = self.dataset.targets[real_index]
+
+            class_name = self.dataset.classes[label]
+
+            times = self.class_augment_times.get(
+                class_name,
+                self.default_augment_times
+            )
+
+            for _ in range(times):
+                self.samples.append(real_index)
 
 
     def __len__(self):
 
-        return (
-            len(self.indices)
-            * self.augment_times
-        )
+        return len(self.samples)
 
 
     def __getitem__(self, index):
 
-        # 找到原始图片
-        original_index = self.indices[
-            index // self.augment_times
+        real_index = self.samples[index]
+
+        path, label = self.dataset.samples[
+            real_index
         ]
 
-        # 获取图片路径
-        image_path, label = (
-            self.dataset.samples[
-                original_index
-            ]
-        )
+        image = Image.open(path).convert("RGB")
 
-        # 打开图片
-        image = Image.open(
-            image_path
-        ).convert("RGB")
-
-        # 随机增强
-        image = self.transform(
-            image
-        )
+        image = self.transform(image)
 
         return image, label
 
 
 # ============================================================
-# 6. 验证 Dataset
-# ============================================================
-
-class ValidationDataset(torch.utils.data.Dataset):
-
-    def __init__(
-        self,
-        dataset,
-        indices,
-        transform
-    ):
-
-        self.dataset = dataset
-
-        self.indices = indices
-
-        self.transform = transform
-
-
-    def __len__(self):
-
-        return len(self.indices)
-
-
-    def __getitem__(self, index):
-
-        real_index = self.indices[index]
-
-        image_path, label = (
-            self.dataset.samples[
-                real_index
-            ]
-        )
-
-        image = Image.open(
-            image_path
-        ).convert("RGB")
-
-        image = self.transform(
-            image
-        )
-
-        return image, label
-
-
-# ============================================================
-# 7. 创建 Dataset
+# 8. 创建 Dataset
 # ============================================================
 
 train_dataset = AugmentedDataset(
-
     base_dataset,
-
     train_indices,
-
     train_transform,
-
-    AUGMENT_TIMES
+    default_augment_times=AUGMENT_TIMES,
+    class_augment_times=CLASS_AUGMENT_TIMES
 )
 
 
-val_dataset = ValidationDataset(
-
-    base_dataset,
-
-    val_indices,
-
-    val_transform
+# ⭐ 验证集不做增强
+val_dataset = datasets.ImageFolder(
+    DATASET_DIR,
+    transform=val_transform
 )
 
+val_dataset.samples = [
+    base_dataset.samples[i]
+    for i in val_indices
+]
 
-print()
-print("================================")
-print("实际训练样本：")
-print(len(train_dataset))
-
-print("验证样本：")
-print(len(val_dataset))
-print("================================")
+val_dataset.targets = [
+    base_dataset.targets[i]
+    for i in val_indices
+]
 
 
 # ============================================================
-# 8. DataLoader
+# 9. DataLoader
 # ============================================================
 
 train_loader = DataLoader(
@@ -309,17 +341,76 @@ val_loader = DataLoader(
 
 
 # ============================================================
-# 9. ResNet18
+# 10. 计算类别权重
+# ============================================================
+
+train_class_counts = Counter(
+    base_dataset.targets[i]
+    for i in train_indices
+)
+
+
+print()
+print("===== 训练集各类别数量 =====")
+
+for class_id in range(num_classes):
+
+    print(
+        f"{base_dataset.classes[class_id]:12s} : "
+        f"{train_class_counts[class_id]} 张"
+    )
+
+
+# ⭐ 数量越少，权重越高
+total_train = len(train_indices)
+
+class_weights = []
+
+for class_id in range(num_classes):
+
+    count = train_class_counts[class_id]
+
+    weight = total_train / (
+            num_classes * count
+    )
+
+    # ⭐ 重点提高虹鳟的学习权重
+    if base_dataset.classes[class_id] == "nijimasu":
+        weight *= 1.25
+
+    class_weights.append(weight)
+
+
+class_weights = torch.tensor(
+    class_weights,
+    dtype=torch.float32
+)
+
+
+print()
+print("===== 类别权重 =====")
+
+for i, weight in enumerate(
+    class_weights
+):
+
+    print(
+        f"{base_dataset.classes[i]:12s} : "
+        f"{weight:.3f}"
+    )
+
+
+# ============================================================
+# 11. ResNet18
 # ============================================================
 
 model = models.resnet18(
-
     weights=models.ResNet18_Weights.DEFAULT
 )
 
 
 # ============================================================
-# 10. 冻结前面的网络
+# 12. 先冻结全部网络
 # ============================================================
 
 for param in model.parameters():
@@ -328,8 +419,13 @@ for param in model.parameters():
 
 
 # ============================================================
-# 11. 解冻 layer4
+# 13. ⭐ 解冻 layer3 + layer4
 # ============================================================
+
+for param in model.layer3.parameters():
+
+    param.requires_grad = True
+
 
 for param in model.layer4.parameters():
 
@@ -337,7 +433,7 @@ for param in model.layer4.parameters():
 
 
 # ============================================================
-# 12. 修改最后分类层
+# 14. 修改最后分类层
 # ============================================================
 
 model.fc = nn.Linear(
@@ -348,15 +444,27 @@ model.fc = nn.Linear(
 )
 
 
+# ⭐ fc 必须训练
+for param in model.fc.parameters():
+
+    param.requires_grad = True
+
+
 # ============================================================
-# 13. Loss
+# 15. Loss
 # ============================================================
 
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(
+
+    weight=class_weights,
+
+    label_smoothing=0.05
+
+)
 
 
 # ============================================================
-# 14. Optimizer
+# 16. Optimizer
 # ============================================================
 
 optimizer = optim.Adam(
@@ -366,12 +474,31 @@ optimizer = optim.Adam(
         model.parameters()
     ),
 
-    lr=0.0003
+    lr=0.0001,
+
+    weight_decay=1e-4
+
 )
 
 
 # ============================================================
-# 15. Training
+# 17. 学习率调整
+# ============================================================
+
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+
+    optimizer,
+
+    mode="min",
+
+    factor=0.5,
+
+    patience=3
+)
+
+
+# ============================================================
+# 18. 训练
 # ============================================================
 
 best_val_loss = float("inf")
@@ -380,9 +507,9 @@ best_val_loss = float("inf")
 for epoch in range(EPOCHS):
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # Training
-    # --------------------------------------------------------
+    # ========================================================
 
     model.train()
 
@@ -427,20 +554,20 @@ for epoch in range(EPOCHS):
 
 
     train_loss = (
-        running_loss /
-        len(train_loader)
+        running_loss
+        / len(train_loader)
     )
 
 
     train_accuracy = (
-        train_correct /
-        train_total
+        train_correct
+        / train_total
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # Validation
-    # --------------------------------------------------------
+    # ========================================================
 
     model.eval()
 
@@ -451,11 +578,24 @@ for epoch in range(EPOCHS):
     val_total = 0
 
 
+    # ⭐ 每个鱼种分别统计
+    class_correct = [
+        0
+        for _ in range(num_classes)
+    ]
+
+    class_total = [
+        0
+        for _ in range(num_classes)
+    ]
+
+
     with torch.no_grad():
 
         for images, labels in val_loader:
 
             outputs = model(images)
+
 
             loss = criterion(
                 outputs,
@@ -479,21 +619,49 @@ for epoch in range(EPOCHS):
             ).sum().item()
 
 
+            # ⭐ 每个类别准确率
+            for label, pred in zip(
+                labels,
+                predicted
+            ):
+
+                label_id = label.item()
+
+                class_total[label_id] += 1
+
+                if label == pred:
+
+                    class_correct[
+                        label_id
+                    ] += 1
+
+
     val_loss = (
-        val_loss /
-        len(val_loader)
+        val_loss
+        / len(val_loader)
     )
 
 
     val_accuracy = (
-        val_correct /
-        val_total
+        val_correct
+        / val_total
     )
 
 
-    # --------------------------------------------------------
-    # 显示训练结果
-    # --------------------------------------------------------
+    # ========================================================
+    # 学习率调整
+    # ========================================================
+
+    scheduler.step(
+        val_loss
+    )
+
+
+    # ========================================================
+    # 输出
+    # ========================================================
+
+    print()
 
     print(
         f"Epoch "
@@ -513,20 +681,49 @@ for epoch in range(EPOCHS):
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
+    # ⭐ 每种鱼的准确率
+    # ========================================================
+
+    print(
+        "----- 各鱼种 Val Acc -----"
+    )
+
+
+    for class_id in range(
+        num_classes
+    ):
+
+        if class_total[class_id] > 0:
+
+            acc = (
+                class_correct[class_id]
+                / class_total[class_id]
+            )
+
+            print(
+                f"{base_dataset.classes[class_id]:12s}"
+                f": {acc:.2%}"
+            )
+
+
+    # ========================================================
     # 保存最佳模型
-    # --------------------------------------------------------
+    # ========================================================
 
     if val_loss < best_val_loss:
 
         best_val_loss = val_loss
+
 
         torch.save(
 
             model.state_dict(),
 
             "best_model.pth"
+
         )
+
 
         print(
             "✅ 最佳模型已保存！"
@@ -534,7 +731,7 @@ for epoch in range(EPOCHS):
 
 
 # ============================================================
-# 16. 完成
+# 19. 完成
 # ============================================================
 
 print()
@@ -546,4 +743,8 @@ print(
     "模型已保存：best_model.pth"
 )
 
+print(
+    "最佳 Val Loss：",
+    best_val_loss
+)
 

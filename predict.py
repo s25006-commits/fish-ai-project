@@ -24,6 +24,7 @@ classes = [
     "carp",
     "funa",
     "kawamutsu",
+    "namazu",
     "nigoi",
     "nijimasu",
     "oikawa",
@@ -51,20 +52,86 @@ def load_model():
 
 def predict_image(img_path):
     print("图片路径:", img_path)
-    load_model()  # ❗这里才加载模型
+
+    load_model()
 
     image = Image.open(img_path).convert("RGB")
     image = transform(image).unsqueeze(0)
 
     with torch.no_grad():
         output = model(image)
+
         probs = torch.nn.functional.softmax(output, dim=1)
-        conf, predicted = torch.max(probs, 1)
 
-    label = classes[predicted.item()]
-    info = get_fish_info(label)
+        print("\n===== 各魚種の確率 =====")
 
-    return label, conf.item(), info
+        for i, prob in enumerate(probs[0]):
+            print(
+                f"{classes[i]:12s}: {prob.item() * 100:.2f}%"
+            )
+
+        print("========================")
+
+        # Top 1 和 Top 2
+        sorted_probs, sorted_indices = torch.sort(
+            probs[0],
+            descending=True
+        )
+
+        confidence = sorted_probs[0].item()
+        second_confidence = sorted_probs[1].item()
+
+        predicted_index = sorted_indices[0].item()
+
+        label = classes[predicted_index]
+
+        # Top1 和 Top2 的差距
+        margin = confidence - second_confidence
+
+        print(f"Top1: {label} {confidence:.2%}")
+        print(f"Top2: {classes[sorted_indices[1].item()]} {second_confidence:.2%}")
+        print(f"Margin: {margin:.2%}")
+
+        # ============================================================
+        # ⭐ 未知魚種判定
+        # ============================================================
+
+        # ============================================================
+        # ⭐ 不明魚種判定
+        # ============================================================
+
+        # 最高確率が非常に低く、
+        # さらにTop1とTop2の差も小さい場合、
+        # 登録されていない魚種の可能性が高いと判断する
+
+        UNKNOWN_THRESHOLD = 0.45
+        UNKNOWN_MARGIN = 0.15
+
+        if (
+                confidence < UNKNOWN_THRESHOLD
+                and margin < UNKNOWN_MARGIN
+        ):
+            print("⚠️ 不明魚種として判定")
+
+            return "unknown", confidence, {
+                "名前": "不明",
+                "外見": "システムに登録されていない魚種の可能性があります。",
+                "習性": "現在登録されている魚種以外の可能性があります。",
+                "type": "不明"
+            }
+
+        # ============================================================
+        # 正常な魚種
+        # ============================================================
+
+        info = get_fish_info(label)
+
+        print("識別結果:", label)
+        print("精度:", confidence)
+        print("魚情報:", info)
+
+        return label, confidence, info
+
 
 
 
