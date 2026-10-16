@@ -25,7 +25,7 @@
 
     font-size: 13px;
     line-height: 1.8;
-
+         pointer-events: none;
     box-shadow: 0 0 8px rgba(0,0,0,0.3);
 }
 
@@ -105,7 +105,20 @@
         ">
         🔇 音を消す
     </button>
-
+<button onclick="requestOrientationPermission()"
+        style="
+            position:absolute;
+            top:135px;
+            right:10px;
+            z-index:1000;
+            padding:10px;
+            background:#1976D2;
+            color:white;
+            border:none;
+            border-radius:8px;
+        ">
+    🧭 方向センサーをON
+</button>
 <div id="legend">
     <b>📍 マップ説明</b><br>
 
@@ -614,42 +627,82 @@ dangerZones.forEach(function(zone) {
 
 
 // 👉 统一处理函数
-// 当前手机方向
+// =====================
+// 🧭 手机方向传感器
+// =====================
 var currentHeading = 0;
 var orientationStarted = false;
 
-// 接收不同设备的方向数据
-function handleOrientation(event) {
-    var heading = null;
+// 保存最新 GPS 位置和区域状态
+var lastLatLng = null;
+var lastInsideRestricted = false;
 
-    // 部分 iPhone Safari 提供指南针方向
-    if (typeof event.webkitCompassHeading === "number") {
-        heading = event.webkitCompassHeading;
-    } else if (typeof event.alpha === "number") {
-        // 其他设备的备用计算方式
-        heading = (360 - event.alpha) % 360;
-    }
-
-    if (heading === null || !Number.isFinite(heading)) {
+// 更新方向扇形
+function updateDirectionCone() {
+    if (!lastLatLng) {
         return;
     }
 
-    currentHeading = heading;
+    if (directionCone) {
+        map.removeLayer(directionCone);
+    }
 
-    // 更新箭头方向
-    if (
-        userMarker &&
-        typeof userMarker.setRotationAngle === "function"
+    directionCone = L.polygon(
+        createCone(
+            lastLatLng[0],
+            lastLatLng[1],
+            currentHeading,
+            45,
+            0.0005
+        ),
+        {
+            color: lastInsideRestricted ? "red" : "blue",
+            fillColor: lastInsideRestricted ? "red" : "blue",
+            fillOpacity: 0.3,
+            interactive: false
+        }
+    ).addTo(map);
+}
+
+// 接收手机方向
+function handleOrientation(event) {
+    var heading = null;
+
+    // iPhone Safari：优先使用指南针方向
+    if (typeof event.webkitCompassHeading === "number") {
+        heading = event.webkitCompassHeading;
+    }
+    // 其他设备：使用绝对方向数据
+    else if (
+        event.absolute === true &&
+        typeof event.alpha === "number"
     ) {
+        heading = (360 - event.alpha) % 360;
+    }
+    else {
+        console.log(
+            "暂时没有可靠的绝对方向数据",
+            "alpha =", event.alpha,
+            "absolute =", event.absolute
+        );
+        return;
+    }
+
+    if (!Number.isFinite(heading)) {
+        return;
+    }
+
+    currentHeading = (heading + 360) % 360;
+
+    // 旋转当前位置的箭头
+    if (userMarker) {
         userMarker.setRotationAngle(currentHeading);
     }
 
-    // 如果地图有方向扇形，也同步更新
-    if (directionCone) {
-        directionCone.setRotationAngle?.(currentHeading);
-    }
+    // 手机转动时，立即更新方向扇形
+    updateDirectionCone();
 
-    console.log("手机方向:", currentHeading);
+    console.log("手机方向：", currentHeading);
 }
 
 // 启动方向传感器
@@ -659,30 +712,41 @@ function requestOrientationPermission() {
         return;
     }
 
-    if (typeof DeviceOrientationEvent.requestPermission === "function") {
-        DeviceOrientationEvent.requestPermission()
-            .then(function (response) {
-                if (response === "granted") {
-                    window.addEventListener(
-                        "deviceorientation",
-                        handleOrientation
-                    );
-                    alert("方向センサーをONにしました。");
-                } else {
-                    alert("方向センサーの使用が許可されていません。");
-                }
-            })
-            .catch(function (error) {
-                console.error("方向センサーエラー:", error);
-                alert("方向センサーを起動できませんでした。");
-            });
-    } else {
+    if (orientationStarted) {
+        alert("方向センサーはすでに起動しています。");
+        return;
+    }
+
+    function startSensor() {
         window.addEventListener(
             "deviceorientation",
             handleOrientation
         );
 
-        alert("方向センサーの接続を開始しました。端末が対応していない場合、方向は取得できません。");
+        orientationStarted = true;
+
+        alert(
+            "方向センサーを起動しました。スマートフォンを回して確認してください。"
+        );
+    }
+
+    if (
+        typeof DeviceOrientationEvent.requestPermission === "function"
+    ) {
+        DeviceOrientationEvent.requestPermission()
+            .then(function(response) {
+                if (response === "granted") {
+                    startSensor();
+                } else {
+                    alert("方向センサーの使用が許可されていません。");
+                }
+            })
+            .catch(function(error) {
+                console.error("方向センサーエラー:", error);
+                alert("方向センサーを起動できませんでした。");
+            });
+    } else {
+        startSensor();
     }
 }
 // =====================
@@ -796,32 +860,12 @@ inDangerZone = insideDanger;
     // =====================
     // 🔺 4. 扇形更新
     // =====================
+    // 保存最新位置与禁钓区域状态
+lastLatLng = userLatLng;
+lastInsideRestricted = insideRestricted;
 
-    if(directionCone){
-
-        map.removeLayer(directionCone);
-
-    }
-
-
-    directionCone=L.polygon(
-
-        createCone(
-            lat,
-            lng,
-            currentHeading,
-            45,
-            0.0005
-        ),
-
-        {
-            color:insideRestricted?'red':'blue',
-            fillColor:insideRestricted?'red':'blue',
-            fillOpacity:0.3
-        }
-
-    ).addTo(map);
-
+// 根据最新位置和手机方向更新扇形
+updateDirectionCone();
 
 
 },

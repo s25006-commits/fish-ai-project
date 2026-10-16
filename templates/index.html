@@ -877,7 +877,8 @@ body{
 }
 /* 两个介绍页面的左右平移动画 */
 #loginPage.intro-sliding,
-#kawauPage.intro-sliding {
+#kawauPage.intro-sliding ,
+#mamushiPage.intro-sliding{
     display: block !important;
     position: absolute;
     top: 0;
@@ -891,31 +892,36 @@ body{
 
 /* 新页面从右侧进入 */
 #loginPage.slide-from-right,
-#kawauPage.slide-from-right {
+#kawauPage.slide-from-right,
+#mamushiPage.slide-from-right{
     transform: translateX(100%);
 }
 
 /* 新页面从左侧进入 */
 #loginPage.slide-from-left,
-#kawauPage.slide-from-left {
+#kawauPage.slide-from-left,
+#mamushiPage.slide-from-left{
     transform: translateX(-100%);
 }
 
 /* 旧页面向左退出 */
 #loginPage.slide-to-left,
-#kawauPage.slide-to-left {
+#kawauPage.slide-to-left,
+#mamushiPage.slide-to-left{
     transform: translateX(-100%);
 }
 
 /* 旧页面向右退出 */
 #loginPage.slide-to-right,
-#kawauPage.slide-to-right {
+#kawauPage.slide-to-right,
+#mamushiPage.slide-to-right{
     transform: translateX(100%);
 }
 
 /* 登录介绍页和カワウ介绍页使用统一的浅蓝色背景 */
 #loginPage,
-#kawauPage {
+#kawauPage,
+#mamushiPage{
     background: #d9edf4;
     min-height: 100vh;
     box-sizing: border-box;
@@ -924,6 +930,227 @@ body{
 /* 确保カワウ介绍页的内部容器不覆盖背景 */
 #kawauPage .kawau-page {
     background: transparent;
+}
+/* ===== 第三页：マムシ注意 ===== */
+#mamushiPage {
+    min-height: 100vh;
+    background: #d9edf4;
+    box-sizing: border-box;
+}
+
+.mamushi-page {
+    min-height: 100vh;
+    padding: 35px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.mamushi-page h2 {
+    color: #185a7a;
+    font-size: 23px;
+    margin-bottom: 20px;
+}
+
+.mamushi-warning {
+    width: 100%;
+    max-width: 360px;
+    padding: 22px 18px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 20px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    color: #333;
+    font-size: 16px;
+    line-height: 1.9;
+    text-align: left;
+}
+
+.mamushi-icon {
+    font-size: 55px;
+    margin-bottom: 12px;
+}
+
+.mamushi-page .login-menu-button {
+    margin-top: 25px;
+}
+
+.mamushi-page .page-indicator {
+    margin-top: 15px;
+}
+
+/* 第三页：マムシ警告 */
+#mamushiPage {
+    background: #fffdf6;
+    overflow: hidden;
+}
+
+.mamushi-page {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+    padding: 24px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mamushi-title {
+    margin: 10px 0 8px;
+    font-size: 30px;
+    font-weight: 800;
+    color: #172536;
+    text-align: center;
+}
+
+.mamushi-subtitle {
+    margin: 0 0 18px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #243b55;
+    text-align: center;
+}
+
+.mamushi-photo-area {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #e8eadf;
+}
+
+.mamushi-photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mamushi-danger {
+    position: absolute;
+    top: 12px;
+    right: 8px;
+    color: #e00000;
+    font-size: clamp(32px, 9vw, 52px);
+    font-weight: 900;
+    line-height: 1.2;
+    text-shadow:
+        2px 2px 0 #ffffff,
+        -2px -2px 0 #ffffff,
+        2px -2px 0 #ffffff,
+        -2px 2px 0 #ffffff;
+    transform: rotate(-5deg);
+}
+
+.mamushi-warning {
+    width: 100%;
+    margin-top: 14px;
+}
+
+.mamushi-warning p {
+    margin: 10px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #202020;
+}
+
+.mamushi-menu-btn {
+    width: 220px;
+    max-width: 90%;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#mamushiPage .page-dots {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 12px;
+}
+
+#mamushiPage .page-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #cccccc;
+}
+
+#mamushiPage .page-dot.active {
+    background: #238b35;
+}
+
+/* 第二页：纯色背景 */
+#kawauPage {
+    background: #d9edf4 !important;
+    background-image: none !important;
+    overflow: hidden;
+}
+
+#kawauPage .kawau-page {
+    background: #d9edf4 !important;
+    background-image: none !important;
+}
+
+/* 第三页：纯色背景 */
+#mamushiPage {
+    background: #d9edf4 !important;
+    background-image: none !important;
+    overflow: hidden;
+}
+
+#mamushiPage .mamushi-page {
+    background: #d9edf4 !important;
+    background-image: none !important;
+}
+
+/* 让手机容器使用统一的纯色背景 */
+
+
+/* 三个介绍页面都铺满手机容器 */
+#loginPage,
+#kawauPage,
+#mamushiPage {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background: #d9edf4 !important;
+    background-image: none !important;
+    box-sizing: border-box;
+}
+
+/* 页面切换动画期间，允许页面脱离文档流 */
+#loginPage.intro-sliding,
+#kawauPage.intro-sliding,
+#mamushiPage.intro-sliding {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    background: #d9edf4 !important;
+    background-image: none !important;
+    box-sizing: border-box;
+}
+
+/* 第二页内部背景 */
+#kawauPage .kawau-page {
+    min-height: 100vh;
+    background: #d9edf4 !important;
+    box-sizing: border-box;
+}
+
+/* 第三页内部背景 */
+#mamushiPage .mamushi-page {
+    min-height: 100vh;
+    background: #d9edf4 !important;
+    box-sizing: border-box;
 }
 
 </style>
@@ -958,13 +1185,14 @@ body{
                 </a>
             </p>
 
-            <button onclick="enterApp()">メニュー</button>
+
 
             <!-- 页面切换提示 -->
 <!-- 页面切换提示 -->
 <div class="page-indicator">
     <div class="page-dots">
         <span class="page-dot active"></span>
+        <span class="page-dot "></span>
         <span class="page-dot"></span>
     </div>
     <p class="swipe-hint">← 左右にスワイプ →</p>
@@ -1015,14 +1243,58 @@ body{
 <!-- 页面切换提示 -->
 <div class="page-indicator">
     <div class="page-dots">
-        <span class="page-dot"></span>
         <span class="page-dot active"></span>
+        <span class="page-dot"></span>
+        <span class="page-dot"></span>
     </div>
     <p class="swipe-hint">← 左右にスワイプ →</p>
 </div>
         </div>
 
     </div>
+<!-- 第三页：マムシ注意 -->
+
+<div id="mamushiPage" class="page">
+    <div class="mamushi-page">
+
+        <h2 class="mamushi-title">マムシに注意</h2>
+        <p class="mamushi-subtitle">
+            夏から秋にかけて、河川敷にはマムシが生息している可能性があります。
+        </p>
+
+        <div class="mamushi-photo-area">
+            <img
+                src="/static/image/images.mamusi.jpg"
+                alt="マムシの写真"
+                class="mamushi-photo"
+            >
+
+            <div class="mamushi-danger">
+                危ない！
+            </div>
+        </div>
+
+        <div class="mamushi-warning">
+            <p>⚠️ 絶対に近づかないでください。</p>
+            <p>⚠️ 見つけても刺激しないでください。</p>
+            <p>⚠️ 草むらや岩場では、足元に注意しましょう。</p>
+        </div>
+
+        <button class="btn green mamushi-menu-btn"
+        onclick="enterApp()">
+    メニュー
+</button>
+
+        <div class="page-dots">
+            <span class="page-dot"></span>
+            <span class="page-dot"></span>
+            <span class="page-dot active"></span>
+        </div>
+
+    </div>
+</div>
+
+
 
 
 
@@ -1155,9 +1427,7 @@ text-align:left;
        <button class="btn green map-btn" onclick="goRealMap()">
     👉 地図を開く
 </button>
-<button class="btn green compass-btn" onclick="requestOrientationPermission()">
-            📱 方向ON
-        </button>
+
 
     </div>
 
@@ -1323,17 +1593,21 @@ function showPage(id) {
         return;
     }
 
+    const introPages = [
+        "loginPage",
+        "kawauPage",
+        "mamushiPage"
+    ];
+
     const currentPage = document.querySelector(".page.active");
 
-    // 只在两个介绍页面之间播放平移动画
     const isIntroSwitch =
         currentPage &&
-        (
-            (currentPage.id === "loginPage" && id === "kawauPage") ||
-            (currentPage.id === "kawauPage" && id === "loginPage")
-        );
+        introPages.includes(currentPage.id) &&
+        introPages.includes(id) &&
+        currentPage.id !== id;
 
-    // 其他页面保持原来的切换方式
+    // 非介绍页之间的切换，保持原来的方式
     if (!isIntroSwitch) {
         document.querySelectorAll(".page").forEach(page => {
             page.classList.remove("active");
@@ -1346,26 +1620,23 @@ function showPage(id) {
     const oldPage = currentPage;
     const newPage = targetPage;
 
-    // 判断滑动方向
-    const goingLeft = id === "kawauPage";
+    const oldIndex = introPages.indexOf(oldPage.id);
+    const newIndex = introPages.indexOf(id);
+    const goingLeft = newIndex > oldIndex;
 
-    // 先让两个页面同时显示
     oldPage.classList.add("intro-sliding");
     newPage.classList.add("intro-sliding");
 
     oldPage.style.zIndex = "1";
     newPage.style.zIndex = "2";
 
-    // 设置新页面的初始位置
     newPage.classList.add(
         goingLeft ? "slide-from-right" : "slide-from-left"
     );
 
-    // 更新当前页面状态
     oldPage.classList.remove("active");
     newPage.classList.add("active");
 
-    // 先完成初始布局，再启动动画
     void newPage.offsetWidth;
 
     requestAnimationFrame(() => {
@@ -1381,7 +1652,6 @@ function showPage(id) {
         });
     });
 
-    // 动画结束后清理临时样式
     newPage.addEventListener("transitionend", function cleanup(e) {
         if (e.propertyName !== "transform") return;
 
@@ -1403,17 +1673,16 @@ function showPage(id) {
         newPage.style.removeProperty("z-index");
     });
 
-    // 更新两页的小圆点
-    document.querySelectorAll(
-        "#loginPage .page-dot"
-    ).forEach((dot, index) => {
-        dot.classList.toggle("active", id === "loginPage" && index === 0);
-    });
+    // 更新三个介绍页面的圆点
+    introPages.forEach((pageId, pageIndex) => {
+        const page = document.getElementById(pageId);
 
-    document.querySelectorAll(
-        "#kawauPage .page-dot"
-    ).forEach((dot, index) => {
-        dot.classList.toggle("active", id === "kawauPage" && index === 1);
+        page.querySelectorAll(".page-dot").forEach((dot, dotIndex) => {
+            dot.classList.toggle(
+                "active",
+                dotIndex === pageIndex
+            );
+        });
     });
 }
 
@@ -1671,21 +1940,19 @@ function goTo(pageId) {
     }
 }
 
-(function () {
-    const firstPage = document.getElementById("loginPage");
-    const secondPage = document.getElementById("kawauPage");
 
-    if (!firstPage || !secondPage) {
-        console.error("首页或鸬鹚页不存在，请检查 HTML 的 id");
-        return;
-    }
+(function () {
+    const introPages = [
+        "loginPage",
+        "kawauPage",
+        "mamushiPage"
+    ];
 
     let startX = 0;
     let startY = 0;
     let isDragging = false;
 
     function handleStart(e) {
-        // 鼠标只响应左键
         if (e.pointerType === "mouse" && e.button !== 0) {
             return;
         }
@@ -1697,12 +1964,12 @@ function goTo(pageId) {
 
     function handleEnd(e, pageId) {
         if (!isDragging) return;
+
         isDragging = false;
 
         const diffX = e.clientX - startX;
         const diffY = e.clientY - startY;
 
-        // 横向距离至少 60px，且横向移动大于纵向移动
         if (
             Math.abs(diffX) < 60 ||
             Math.abs(diffX) < Math.abs(diffY)
@@ -1710,18 +1977,24 @@ function goTo(pageId) {
             return;
         }
 
-        // 首页向左滑 → 鸬鹚页
-        if (pageId === "loginPage" && diffX < 0) {
-            showPage("kawauPage");
+        const currentIndex = introPages.indexOf(pageId);
+
+        // 向左滑：下一页
+        if (diffX < 0 && currentIndex < introPages.length - 1) {
+            showPage(introPages[currentIndex + 1]);
         }
 
-        // 鸬鹚页向右滑 → 首页
-        if (pageId === "kawauPage" && diffX > 0) {
-            showPage("loginPage");
+        // 向右滑：上一页
+        if (diffX > 0 && currentIndex > 0) {
+            showPage(introPages[currentIndex - 1]);
         }
     }
 
-    function bindSwipe(page, pageId) {
+    introPages.forEach(pageId => {
+        const page = document.getElementById(pageId);
+
+        if (!page) return;
+
         page.addEventListener("pointerdown", handleStart);
 
         page.addEventListener("pointerup", function (e) {
@@ -1731,11 +2004,9 @@ function goTo(pageId) {
         page.addEventListener("pointercancel", function () {
             isDragging = false;
         });
-    }
-
-    bindSwipe(firstPage, "loginPage");
-    bindSwipe(secondPage, "kawauPage");
+    });
 })();
+
 
 </script>
 
