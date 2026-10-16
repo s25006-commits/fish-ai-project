@@ -614,64 +614,75 @@ dangerZones.forEach(function(zone) {
 
 
 // 👉 统一处理函数
-function handleOrientation(event){
+// 当前手机方向
+var currentHeading = 0;
+var orientationStarted = false;
 
-    if(event.alpha !== null){
+// 接收不同设备的方向数据
+function handleOrientation(event) {
+    var heading = null;
 
-        currentHeading = 360 - event.alpha;
-
-        console.log(
-            "手机方向:",
-            currentHeading
-        );
-
-
-        // ⭐ 实时旋转箭头
-        if(userMarker){
-
-            userMarker.setRotationAngle(
-                currentHeading
-            );
-
-        }
-
+    // 部分 iPhone Safari 提供指南针方向
+    if (typeof event.webkitCompassHeading === "number") {
+        heading = event.webkitCompassHeading;
+    } else if (typeof event.alpha === "number") {
+        // 其他设备的备用计算方式
+        heading = (360 - event.alpha) % 360;
     }
 
+    if (heading === null || !Number.isFinite(heading)) {
+        return;
+    }
+
+    currentHeading = heading;
+
+    // 更新箭头方向
+    if (
+        userMarker &&
+        typeof userMarker.setRotationAngle === "function"
+    ) {
+        userMarker.setRotationAngle(currentHeading);
+    }
+
+    // 如果地图有方向扇形，也同步更新
+    if (directionCone) {
+        directionCone.setRotationAngle?.(currentHeading);
+    }
+
+    console.log("手机方向:", currentHeading);
 }
 
-
+// 启动方向传感器
 function requestOrientationPermission() {
+    if (typeof DeviceOrientationEvent === "undefined") {
+        alert("この端末は方向センサーに対応していません。");
+        return;
+    }
 
-    if (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function"
-    ) {
-
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
         DeviceOrientationEvent.requestPermission()
-            .then(response => {
-
+            .then(function (response) {
                 if (response === "granted") {
-
                     window.addEventListener(
                         "deviceorientation",
                         handleOrientation
                     );
-
+                    alert("方向センサーをONにしました。");
                 } else {
-                    alert("方向センサー許可が必要です");
+                    alert("方向センサーの使用が許可されていません。");
                 }
-
             })
-            .catch(console.error);
-
+            .catch(function (error) {
+                console.error("方向センサーエラー:", error);
+                alert("方向センサーを起動できませんでした。");
+            });
     } else {
-
-        // 👉 安卓 / 普通浏览器
         window.addEventListener(
             "deviceorientation",
             handleOrientation
         );
 
+        alert("方向センサーの接続を開始しました。端末が対応していない場合、方向は取得できません。");
     }
 }
 // =====================

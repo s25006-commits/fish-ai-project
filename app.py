@@ -33,7 +33,6 @@ def predict():
 
     file.save(filepath)
 
-
     try:
 
         img = Image.open(filepath)
@@ -54,21 +53,20 @@ def predict():
             quality=90
         )
 
-
-        label, conf, info = predict_image(filepath)
-
+        # ⭐ 接收 confidence + margin
+        label, conf, margin, info = predict_image(filepath)
 
         return jsonify({
 
             "name": info["名前"],
             "confidence": f"{conf*100:.2f}",
+            "margin": f"{margin*100:.2f}",
             "feature": info["外見"],
             "habit": info["習性"],
             "種類識別": info["type"],
             "caution": info.get("注意", "")
 
         })
-
 
     except Exception as e:
 

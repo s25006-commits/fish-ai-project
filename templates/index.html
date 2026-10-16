@@ -20,6 +20,122 @@ body{
     background:#d9edf4;   /* 或白色都行 */
            /* 压住原背景 */
 }
+/* =========================
+   カワウ装飾
+========================= */
+
+.login-page {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    height: 100%;
+    padding: 25px 20px;
+    box-sizing: border-box;
+}
+
+/* カワウ画像 */
+.kawau-decoration {
+    position: absolute;
+    width: 85px;
+    height: auto;
+    object-fit: contain;
+    z-index: 3;
+    pointer-events: none;
+
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,0.25));
+}
+
+.kawau-left {
+    left: 5px;
+    bottom: 75px;
+    transform: rotate(-6deg);
+}
+
+.kawau-right {
+    right: 5px;
+    bottom: 75px;
+    transform: scaleX(-1) rotate(-5deg);
+}
+
+
+/* =========================
+   カワウ被害説明
+========================= */
+
+.kawau-info {
+    width: 100%;
+    max-width: 360px;
+
+    margin-top: 18px;
+    padding: 15px 18px;
+
+    background: rgba(255,255,255,0.90);
+    border-radius: 18px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+
+    box-sizing: border-box;
+}
+
+.kawau-info h3 {
+    margin: 0 0 8px 0;
+
+    color: #185a7a;
+    font-size: 18px;
+}
+
+.kawau-info p {
+    margin: 6px 0;
+
+    font-size: 13px;
+    line-height: 1.7;
+    color: #333;
+}
+
+
+/* =========================
+   対策
+========================= */
+
+.kawau-countermeasure {
+    width: 100%;
+    max-width: 360px;
+
+    margin-top: 10px;
+    padding: 13px 18px;
+
+    background: rgba(240,248,245,0.92);
+    border-radius: 16px;
+
+    box-sizing: border-box;
+}
+
+.kawau-countermeasure h4 {
+    margin: 0 0 7px 0;
+
+    color: #28745a;
+    font-size: 16px;
+}
+
+.kawau-countermeasure ul {
+    margin: 0;
+    padding-left: 20px;
+
+    text-align: left;
+
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.kawau-countermeasure li {
+    margin-bottom: 3px;
+}
 .phone{
 
     width:100%;
@@ -656,39 +772,260 @@ body{
 }
 /* ===== 底部鱼 ===== */
 
+/* ===== 第二页：カワウ紹介 ===== */
+
+#loginPage,
+#kawauPage {
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+
+#loginPage .login-page {
+    min-height: 100vh;
+    padding: 25px 20px;
+    box-sizing: border-box;
+}
+
+.kawau-page {
+    min-height: 100vh;
+    padding: 25px 20px 35px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.kawau-page > h2 {
+    margin: 10px 0 20px;
+    color: #185a7a;
+    font-size: 22px;
+}
+
+.kawau-images {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 15px auto 20px;
+    max-width: 360px;
+}
+
+.kawau-images img {
+    width: calc(50% - 6px);
+    height: 125px;
+    object-fit: cover;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.18);
+}
+
+.kawau-page .kawau-info,
+.kawau-page .kawau-countermeasure {
+    margin: 12px auto 0;
+    text-align: left;
+}
+
+.kawau-page .kawau-info {
+    max-width: 360px;
+}
+
+.kawau-page .kawau-countermeasure {
+    max-width: 360px;
+}
+
+.kawau-swipe-hint {
+    margin-top: 18px;
+    font-size: 12px;
+    color: #567c72;
+}
+/* 页面切换提示区域 */
+.page-indicator {
+    width: 100%;
+    text-align: center;
+    padding: 15px 0 20px;
+    box-sizing: border-box;
+}
+
+/* 小圆点排列 */
+.page-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 默认圆点 */
+.page-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(60, 90, 100, 0.35);
+    transition: all 0.2s ease;
+}
+
+/* 当前页面的圆点 */
+.page-dot.active {
+    width: 10px;
+    height: 10px;
+    background: #24505A;
+}
+
+/* 左右滑动提示文字 */
+.swipe-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #45656D;
+}
+/* 两个介绍页面的左右平移动画 */
+#loginPage.intro-sliding,
+#kawauPage.intro-sliding {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
+    will-change: transform;
+}
+
+/* 新页面从右侧进入 */
+#loginPage.slide-from-right,
+#kawauPage.slide-from-right {
+    transform: translateX(100%);
+}
+
+/* 新页面从左侧进入 */
+#loginPage.slide-from-left,
+#kawauPage.slide-from-left {
+    transform: translateX(-100%);
+}
+
+/* 旧页面向左退出 */
+#loginPage.slide-to-left,
+#kawauPage.slide-to-left {
+    transform: translateX(-100%);
+}
+
+/* 旧页面向右退出 */
+#loginPage.slide-to-right,
+#kawauPage.slide-to-right {
+    transform: translateX(100%);
+}
+
+/* 登录介绍页和カワウ介绍页使用统一的浅蓝色背景 */
+#loginPage,
+#kawauPage {
+    background: #d9edf4;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* 确保カワウ介绍页的内部容器不覆盖背景 */
+#kawauPage .kawau-page {
+    background: transparent;
+}
+
 </style>
 </head>
 
 <body>
 
 
-<!-- 首页 -->
+<!-- 首页：恢复原来的 NPO 入会介绍 -->
 <div class="phone">
+
     <div id="loginPage" class="page active">
-    <div class="login-page">
 
-        <h2>神河町のNPOの入会ご案内</h2>
-        <p class="intro-text">
-        本エリアの維持・管理・環境保全活動は、
-         会員の皆様のご協力によって支えられています。
-         </p>
+        <div class="login-page">
 
-       <p class="intro-text">
-        持続可能な釣り場づくりのため、
-        ぜひご入会をお願いいたします。
-       </p>
+            <h2>神河町のNPOの入会ご案内</h2>
 
-        <button onclick="enterApp()">メニュー</button>
+            <p class="intro-text">
+                本エリアの維持・管理・環境保全活動は、
+                会員の皆様のご協力によって支えられています。
+            </p>
 
-        <p class="join-link">
-            入会はこちら：
-            <a href="https://www.npohtf.com" target="_blank">
-                https://www.npohtf.com
-            </a>
-        </p>
+            <p class="intro-text">
+                持続可能な釣り場づくりのため、
+                ぜひご入会をお願いいたします。
+            </p>
+
+            <p class="join-link">
+                入会はこちら：
+                <a href="https://www.npohtf.com" target="_blank">
+                    https://www.npohtf.com
+                </a>
+            </p>
+
+            <button onclick="enterApp()">メニュー</button>
+
+            <!-- 页面切换提示 -->
+<!-- 页面切换提示 -->
+<div class="page-indicator">
+    <div class="page-dots">
+        <span class="page-dot active"></span>
+        <span class="page-dot"></span>
+    </div>
+    <p class="swipe-hint">← 左右にスワイプ →</p>
+</div>
+        </div>
 
     </div>
+
+    <!-- 第二页：カワウの被害と対策 -->
+    <div id="kawauPage" class="page">
+
+        <div class="kawau-page">
+
+            <h2>🐦 カワウによる被害と対策</h2>
+
+            <div class="kawau-images">
+                <img src="/static/image/kawau1.webp" alt="カワウ">
+                <img src="/static/image/kawau2.jpg" alt="カワウ">
+            </div>
+
+            <div class="kawau-info">
+                <h3>カワウによる被害</h3>
+
+                <p>
+                    カワウは魚を主に食べる鳥で、
+                    アユなどの魚を大量に捕食することがあります。
+                </p>
+
+                <p>
+                    特に魚の放流時期や魚が集まる場所では、
+                    漁業や魚類資源への影響が問題となっています。
+                </p>
+            </div>
+
+            <div class="kawau-countermeasure">
+                <h4>🌿 カワウ対策とおすすめ</h4>
+
+                <ul>
+                    <li>カワウが多い場所では、適切な追い払いを行う</li>
+                    <li>カワウの目撃場所・時期を記録し、情報を共有する</li>
+                    <li>魚が隠れられる環境を整え、魚を守る</li>
+                    <li>釣り人も地域のルールを守り、自然環境の保全に協力する</li>
+                </ul>
+            </div>
+
+
+<!-- 页面切换提示 -->
+<!-- 页面切换提示 -->
+<div class="page-indicator">
+    <div class="page-dots">
+        <span class="page-dot"></span>
+        <span class="page-dot active"></span>
+    </div>
+    <p class="swipe-hint">← 左右にスワイプ →</p>
 </div>
+        </div>
+
+    </div>
+
+
+
 
 <!-- 菜单页 -->
 <div id="menuPage" class="page">
@@ -699,9 +1036,9 @@ body{
     </div>
     <div class="main-card">
 
-    <button class="btn blue" onclick="goRealMap()">
-        地図を見る
-    </button>
+    <button class="btn blue" onclick="goTo('mapPage')">
+    地図を見る
+</button>
     <button class="btn green" onclick="openCamera()">
        📷 魚を識別
     </button>
@@ -978,11 +1315,106 @@ let currentFish="";
 function openCamera(){
     showPage("home"); // 或 cameraPage
 }
-function showPage(id){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+function showPage(id) {
+    const targetPage = document.getElementById(id);
 
+    if (!targetPage) {
+        console.error("找不到页面：" + id);
+        return;
+    }
 
+    const currentPage = document.querySelector(".page.active");
+
+    // 只在两个介绍页面之间播放平移动画
+    const isIntroSwitch =
+        currentPage &&
+        (
+            (currentPage.id === "loginPage" && id === "kawauPage") ||
+            (currentPage.id === "kawauPage" && id === "loginPage")
+        );
+
+    // 其他页面保持原来的切换方式
+    if (!isIntroSwitch) {
+        document.querySelectorAll(".page").forEach(page => {
+            page.classList.remove("active");
+        });
+
+        targetPage.classList.add("active");
+        return;
+    }
+
+    const oldPage = currentPage;
+    const newPage = targetPage;
+
+    // 判断滑动方向
+    const goingLeft = id === "kawauPage";
+
+    // 先让两个页面同时显示
+    oldPage.classList.add("intro-sliding");
+    newPage.classList.add("intro-sliding");
+
+    oldPage.style.zIndex = "1";
+    newPage.style.zIndex = "2";
+
+    // 设置新页面的初始位置
+    newPage.classList.add(
+        goingLeft ? "slide-from-right" : "slide-from-left"
+    );
+
+    // 更新当前页面状态
+    oldPage.classList.remove("active");
+    newPage.classList.add("active");
+
+    // 先完成初始布局，再启动动画
+    void newPage.offsetWidth;
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            oldPage.classList.add(
+                goingLeft ? "slide-to-left" : "slide-to-right"
+            );
+
+            newPage.classList.remove(
+                "slide-from-right",
+                "slide-from-left"
+            );
+        });
+    });
+
+    // 动画结束后清理临时样式
+    newPage.addEventListener("transitionend", function cleanup(e) {
+        if (e.propertyName !== "transform") return;
+
+        newPage.removeEventListener("transitionend", cleanup);
+
+        oldPage.classList.remove(
+            "intro-sliding",
+            "slide-to-left",
+            "slide-to-right"
+        );
+
+        newPage.classList.remove(
+            "intro-sliding",
+            "slide-from-right",
+            "slide-from-left"
+        );
+
+        oldPage.style.removeProperty("z-index");
+        newPage.style.removeProperty("z-index");
+    });
+
+    // 更新两页的小圆点
+    document.querySelectorAll(
+        "#loginPage .page-dot"
+    ).forEach((dot, index) => {
+        dot.classList.toggle("active", id === "loginPage" && index === 0);
+    });
+
+    document.querySelectorAll(
+        "#kawauPage .page-dot"
+    ).forEach((dot, index) => {
+        dot.classList.toggle("active", id === "kawauPage" && index === 1);
+    });
 }
 
 function takePhoto(){
@@ -1070,7 +1502,21 @@ console.log("caution =", data.caution);
 console.log("完整返回 =", data);
 document.getElementById("fishDesc").innerText = "外見：" + data.feature;
 document.getElementById("fishHabit").innerText = "習性：" + data.habit;
-document.getElementById("fishCaution").innerText ="⚠️ 注意:ナマズは汚れた水環境に生息している場合があります。衛生面に十分注意し、できれば持ち帰って食べることは避けましょう;" + data.caution;
+
+// 🐟 只有识别结果为ナマズ时，才显示注意事项
+if (data.name === "ナマズ") {
+
+    document.getElementById("fishCaution").innerText =
+        "⚠️ 注意：ナマズは汚れた水環境に生息している場合があります。衛生面に十分注意し、できれば持ち帰って食べることは避けましょう。";
+
+    document.getElementById("fishCaution").style.display = "block";
+
+} else {
+
+    // 其他鱼不显示注意事项
+    document.getElementById("fishCaution").innerText = "";
+    document.getElementById("fishCaution").style.display = "none";
+}
         let typeText="";
 
 if(data["種類識別"]==="外来種"){
@@ -1121,21 +1567,21 @@ if(data.name === "不明"){
 }else{
 
     let acc = parseFloat(data.confidence);
+let margin = parseFloat(data.margin);
+let levelText = "";
 
-    let levelText = "";
+if (acc >= 80) {
+    levelText = " ⭐ 高信頼度";
+} else if (acc >= 60 && margin >= 30) {
+    levelText = " ⭐ 高信頼度";
+} else if (acc >= 60) {
+    levelText = " ⚠ 中信頼度";
+} else {
+    levelText = " ❗ 低信頼度（再識別したほうがいい）";
+}
 
-    if(acc >= 80){
-        levelText = " ⭐ 高精度";
-
-    }else if(acc >= 60){
-        levelText = " ⚠ 中精度";
-
-    }else{
-        levelText = " ❗ 低精度（再識別したほうがいい）";
-    }
-
-    document.getElementById("accuracy").innerText =
-        "精度：" + acc + "%" + levelText;
+document.getElementById("accuracy").innerText =
+    "精度：" + acc.toFixed(2) + "%" + levelText;
 
 
     // もう一度撮る → 表示
@@ -1225,6 +1671,71 @@ function goTo(pageId) {
     }
 }
 
+(function () {
+    const firstPage = document.getElementById("loginPage");
+    const secondPage = document.getElementById("kawauPage");
+
+    if (!firstPage || !secondPage) {
+        console.error("首页或鸬鹚页不存在，请检查 HTML 的 id");
+        return;
+    }
+
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
+
+    function handleStart(e) {
+        // 鼠标只响应左键
+        if (e.pointerType === "mouse" && e.button !== 0) {
+            return;
+        }
+
+        startX = e.clientX;
+        startY = e.clientY;
+        isDragging = true;
+    }
+
+    function handleEnd(e, pageId) {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const diffX = e.clientX - startX;
+        const diffY = e.clientY - startY;
+
+        // 横向距离至少 60px，且横向移动大于纵向移动
+        if (
+            Math.abs(diffX) < 60 ||
+            Math.abs(diffX) < Math.abs(diffY)
+        ) {
+            return;
+        }
+
+        // 首页向左滑 → 鸬鹚页
+        if (pageId === "loginPage" && diffX < 0) {
+            showPage("kawauPage");
+        }
+
+        // 鸬鹚页向右滑 → 首页
+        if (pageId === "kawauPage" && diffX > 0) {
+            showPage("loginPage");
+        }
+    }
+
+    function bindSwipe(page, pageId) {
+        page.addEventListener("pointerdown", handleStart);
+
+        page.addEventListener("pointerup", function (e) {
+            handleEnd(e, pageId);
+        });
+
+        page.addEventListener("pointercancel", function () {
+            isDragging = false;
+        });
+    }
+
+    bindSwipe(firstPage, "loginPage");
+    bindSwipe(secondPage, "kawauPage");
+})();
 
 </script>
 
